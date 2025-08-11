@@ -1,7 +1,6 @@
 package engine;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -17,11 +16,14 @@ public class ChessEngine {
 		nodeMoves = new Move[depth];
 		nodes = new double[depth];
 
+		
 		minimax(depth, scb, NEG_INF, POS_INF);
+		System.out.println("total visits: " + visitCount);
+
 		Move minimaxMove = nodeMoves[depth - 1];
 
-		System.out.println("node moves: ");
-		System.out.println(Arrays.deepToString(nodeMoves));
+		// System.out.println("node moves: ");
+		// System.out.println(Arrays.deepToString(nodeMoves));
 
 		nodes = null;
 		nodeMoves = null;
@@ -31,89 +33,76 @@ public class ChessEngine {
 
 	public static double minimax(int depth, SimpleChessBoard simpleBoard, double alpha, double beta) {
 
+		visitCount++;
+
+		// اگر به عمق مورد نظر رسیدیم، امتیاز نهایی صفحه را برمی‌گردانیم
 		if (depth == 0) {
 			return getBoardScore(simpleBoard);
 		}
 
 		List<Move> moves = simpleBoard.generateMoves();
-		moves = shuffleMovesList(moves);
-		moves.sort(moveSorter);
+		// بهتر است لیست حرکات را مرتب کنید تا هرس زودتر اتفاق بیفتد
+		moves = shuffleMovesList(moves); // برای شروع، این خط را حفظ می‌کنیم
 
-		SimpleChessBoard copy;
-
+		// اگر نوبت بازیکن سفید (MAX) باشد
 		if (simpleBoard.getSide() == 0) {
+			double maxScore = alpha; // بهترین امتیاز برای MAX
 
-			nodes[depth - 1] = NEG_INF;
-
-			for (Move m : moves) {
-
-				copy = simpleBoard.makeCopy();
-				copy.doWhiteMove(m);
-
-				if (copy.isWhiteKingOnFire()) {
-					continue;
+			for (Move move : moves) {
+				SimpleChessBoard copy = simpleBoard.makeCopy();
+				copy.doWhiteMove(move);
+				
+				// فراخوانی بازگشتی با مقدار alpha فعلی و beta قبلی
+				double score = minimax(depth - 1, copy, maxScore, beta);
+				
+				// به‌روزرسانی بهترین امتیاز (alpha) برای MAX
+				if (score > maxScore) {
+					maxScore = score;
+					// ذخیره حرکت مرتبط
+					nodeMoves[depth - 1] = move;
 				}
 
-				double s = minimax(depth - 1, copy, alpha, beta);
-
-				if (s > nodes[depth - 1]) {
-					nodeMoves[depth - 1] = m;
-					nodes[depth - 1] = s;
+				// شرط هرس آلفا-بتا برای نود MAX
+				if (maxScore >= beta) {
+					return maxScore; // هرس
 				}
-
-				if (s >= beta)
-					break;
-
-				alpha = Math.max(alpha, s);
 			}
+			return maxScore;
+		} 
+		// اگر نوبت بازیکن سیاه (MIN) باشد
+		else {
+			double minScore = beta; // بهترین امتیاز برای MIN
 
-			return nodes[depth - 1];
+			for (Move move : moves) {
+				SimpleChessBoard copy = simpleBoard.makeCopy();
+				copy.doBlackMove(move);
+				
+				// فراخوانی بازگشتی با مقدار alpha قبلی و beta فعلی
+				double score = minimax(depth - 1, copy, alpha, minScore);
 
-		} else {
-
-			nodes[depth - 1] = POS_INF;
-
-			for (Move m : moves) {
-
-				copy = simpleBoard.makeCopy();
-
-				copy.doBlackMove(m);
-
-				if (copy.isBlackKingOnFire()) {
-					continue;
+				// به‌روزرسانی بهترین امتیاز (beta) برای MIN
+				if (score < minScore) {
+					minScore = score;
+					// ذخیره حرکت مرتبط
+					nodeMoves[depth - 1] = move;
 				}
 
-				double s = minimax(depth - 1, copy, alpha, beta);
-
-				if (s < nodes[depth - 1]) {
-					nodeMoves[depth - 1] = m;
-					nodes[depth - 1] = s;
+				// شرط هرس آلفا-بتا برای نود MIN
+				if (minScore <= alpha) {
+					return minScore; // هرس
 				}
-
-				if (s <= alpha)
-					break;
-
-				beta = Math.min(beta, s);
-
 			}
-			return nodes[depth - 1];
+			return minScore;
 		}
 	}
 
 	
-	private final static Random RAND_OBJECT = new Random();
 	public static double getBoardScore(ChessBoard cb) {
 		double score = 0.0;
 		for (char piece : ChessBoard.NAMES) {
 			score += BitTools.bitCount(cb.getBitboard(piece)) * PIECE_VALUE[piece];
 		}
 		return score;
-		
-//		if (cb.getSide() == 0) {
-//			return RAND_OBJECT.nextInt(100) > 3 ? -10.0 : 10.0;
-//		} else {
-//			return RAND_OBJECT.nextInt(100) > 3 ? 10.0 : -10.0;
-//		}
 	}
 
 	public static final List<Move> shuffleMovesList(List<Move> ls) {
@@ -139,8 +128,9 @@ public class ChessEngine {
 	public static double nodes[];
 	public static Move nodeMoves[];
 
-	public static double POS_INF = +10_000.0;
-	public static double NEG_INF = -10_000.0;
+	public static double POS_INF = +1_000_000.0;
+	public static double NEG_INF = -1_000_000.0;
+	public static int visitCount = 0;
 
 	public static final double[] PIECE_VALUE = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

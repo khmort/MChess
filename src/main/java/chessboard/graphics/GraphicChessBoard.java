@@ -57,7 +57,7 @@ public class GraphicChessBoard extends JPanel {
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
-								cpuMove = ChessEngine.calcBestMove(board, 6);
+								cpuMove = ChessEngine.calcBestMove(board, 4);
 
 								if (board.getSide() == 0) {
 									board.doWhiteMove(cpuMove);
