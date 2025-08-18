@@ -15,5 +15,14 @@
 			<artifactId>deeplearning4j-core</artifactId>
 			<version>1.0.0-M2.1</version>
 		</dependency>
+
+		<!-- ND4J backend for CPU -->
+		<dependency>
+			<groupId>org.nd4j</groupId>
+			<artifactId>nd4j-native-platform</artifactId>
+			<version>1.0.0-M2.1</version>
+		</dependency>
+
 	</dependencies>
+	
 </project>

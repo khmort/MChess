@@ -25,9 +25,11 @@ public class GraphicChessBoard extends JPanel {
 	public GraphicChessBoard(SimpleChessBoard cb) {
 		super();
 		board = cb;
+		engine = new ChessEngine();
 		initListeners();
 	}
 
+	static int moveCounter = 0;
 	private void initListeners() {
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -57,7 +59,7 @@ public class GraphicChessBoard extends JPanel {
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
-								cpuMove = ChessEngine.calcBestMove(board, 4);
+								cpuMove = engine.calcBestMove(board, moveCounter == 1 ? 8 : 10);
 
 								if (board.getSide() == 0) {
 									board.doWhiteMove(cpuMove);
@@ -70,6 +72,7 @@ public class GraphicChessBoard extends JPanel {
 						});
 
 						engineThread.start();
+						moveCounter++;
 
 					}
 
@@ -220,6 +223,7 @@ public class GraphicChessBoard extends JPanel {
 	private int selectedSquare = -1;
 	private List<Move> legalMoves = new ArrayList<>();
 	private Move cpuMove = null;
+	private ChessEngine engine;
 
 	private static Image WK;
 	private static Image WQ;

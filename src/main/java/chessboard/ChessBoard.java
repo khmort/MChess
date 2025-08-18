@@ -1,6 +1,7 @@
 package chessboard;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -16,30 +17,11 @@ import utils.BitTools;
 
 public class ChessBoard {
 
-	// =============================================================
-	// ************************* VARIBALES *************************
-	// =============================================================
-
-	// =============================
-	// ******** MAIN FIELDS ********
-	// =============================
-	// which side must be play. white (0) or black (1)?
 	protected int side;
-	// piece name to its order. for example nameToOrder['P'] representation the
-	// white pawns positions on the board.
 	protected long[] nameToOrder;
-	// occupancies array connects side to active pieces positions of the side.
 	protected long[] occupancies;
-	// castle right encoding.
 	protected int castle;
 
-	// =============================
-	// ********** STATICS **********
-	// =============================
-
-	// generators can handle the problem of generating moves in possible situations.
-	// for example attacksGenerators['Q'] can generate the attacks of white queen by
-	// passing the blocks into it.
 	protected static AttackGeneratorFunction[] attacskGenerators = new AttackGeneratorFunction[115];
 	protected static MovesGeneratorFunction[] movesGenerators = new MovesGeneratorFunction[115];
 	static {
@@ -313,15 +295,11 @@ public class ChessBoard {
 	 * calculates all legal moves (not including check) for `pieceName`.
 	 */
 	public List<Move> generateMoves(char pieceName) {
-		// initial necessary variables
+
 		List<Move> moves = new ArrayList<>();
-		// bit-board of pieceName
 		long bitboard = getBitboard(pieceName);
-		// the POS is one of the pieces in the bit-board
 		int pos;
-		//
 		int apos;
-		//
 		long attacks;
 
 		// =============================================================
@@ -810,6 +788,26 @@ public class ChessBoard {
 		System.out.println();
 		System.out.println("side: " + side + " (" + (side == 0 ? "white" : "black") + ")");
 		System.out.println();
+	}
+
+	@Override
+	public int hashCode() {
+		int result = 17;  // عدد اولیه غیرصفر
+		result = 31 * result + side;
+		result = 31 * result + Arrays.hashCode(nameToOrder);
+		result = 31 * result + Arrays.hashCode(occupancies);
+		result = 31 * result + castle;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) return false;
+		ChessBoard other = (ChessBoard) o;
+		return side == other.side
+			&& castle == other.castle
+			&& Arrays.equals(nameToOrder, other.nameToOrder)
+			&& Arrays.equals(occupancies, other.occupancies);
 	}
 
 }

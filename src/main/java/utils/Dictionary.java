@@ -176,6 +176,20 @@ public class Dictionary<K, V> implements Cloneable, Serializable {
 	}
 
 	public void sortByValues(Comparator<V> comp) {
+		ArrayList<Entry<K, V>> ents = new ArrayList<>(size());
+		for (int i = 0; i < size(); i++) {
+			ents.add(Map.entry(keys.get(i), values.get(i)));
+		}
+		clear();
+		ents.sort(new Comparator<Entry<K, V>>() {
+			@Override
+			public int compare(Entry<K, V> o1, Entry<K, V> o2) {
+				return comp.compare(o1.getValue(), o2.getValue());
+			}
+		});
+		for (Entry<K, V> ent : ents) {
+			add(ent.getKey(), ent.getValue());
+		}
 	}
 
 	public void printElements() {
