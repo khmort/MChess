@@ -13,7 +13,7 @@ import utils.BitTools;
 public class ChessEngine {
 
 	public ChessEngine() {
-		tt = new TranspositionTable(100_000_000);
+		// tt = new TranspositionTable(100_000_000);
 	}
 
 	public Move calcBestMove(SimpleChessBoard scb, int depth) {
@@ -23,7 +23,7 @@ public class ChessEngine {
 
 		long time = System.currentTimeMillis();
 		visits = 0;
-		tt.remove(scb);
+		// tt.remove(scb);
 		minimax(depth, scb, NEG_INF, POS_INF);
 		System.out.println("Visits: " + visits);
 		System.out.println("Time: " + (System.currentTimeMillis() - time) / 1000.0 + " sec");
@@ -47,18 +47,20 @@ public class ChessEngine {
 			return getBoardScore(simpleBoard);
 		}
 
-		Infos infs = tt.get(simpleBoard);
+		// Infos infs = tt.get(simpleBoard);
 
-		if (infs != null) {
-			if (infs.f == Flag.LOWER && infs.score >= beta) {
-				return infs.score;
-			}
-			else if (infs.f == Flag.UPPER && infs.score <= alpha) {
-				return infs.score;
-			} else {
-				return infs.score;
-			}
-		}
+		// if (infs != null) {
+		// 	if (infs.depth >= depth) {
+		// 		if (infs.f == Flag.LOWER && infs.score >= beta) {
+		// 			return infs.score;
+		// 		}
+		// 		else if (infs.f == Flag.UPPER && infs.score <= alpha) {
+		// 			return infs.score;
+		// 		} else {
+		// 			return infs.score;
+		// 		}
+		// 	}
+		// }
 
 		List<Move> moves = simpleBoard.generateMoves();
 		Collections.shuffle(moves);
@@ -78,11 +80,11 @@ public class ChessEngine {
 					nodeMoves[depth - 1] = move;
 				}
 				if (score >= beta) {
-					tt.put(simpleBoard, score, Flag.LOWER, depth);
+					// tt.put(simpleBoard, score, Flag.LOWER, depth);
 					return score;
 				}
 			}
-			tt.put(simpleBoard, alpha, Flag.EXACT, depth);
+			// tt.put(simpleBoard, alpha, Flag.EXACT, depth);
 			return alpha;
 		} else {
 			for (Move move : moves) {
@@ -95,11 +97,11 @@ public class ChessEngine {
 					nodeMoves[depth - 1] = move;
 				}
 				if (score <= alpha) {
-					tt.put(simpleBoard, score, Flag.UPPER, depth);
+					// tt.put(simpleBoard, score, Flag.UPPER, depth);
 					return score;
 				}
 			}
-			tt.put(simpleBoard, beta, Flag.EXACT, depth);
+			// tt.put(simpleBoard, beta, Flag.EXACT, depth);
 			return beta;
 		}
 
@@ -135,7 +137,7 @@ public class ChessEngine {
 	protected static final double POS_INF = Double.POSITIVE_INFINITY;
 	protected static final double NEG_INF = Double.NEGATIVE_INFINITY;
 
-	protected static final double[] PIECE_VALUE = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	public static final double[] PIECE_VALUE = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.0, 0, 0, 0, 0, 0, 0, 0, 0, 1000.0, 0, 0, 3.5, 0, 1.0, 24.0, 6.0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4.0, 0, 0, 0, 0, 0, 0, 0, 0, -1000.0, 0, 0, -3.5, 0, -1.0, -24.0,

@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import chessboard.ChessBoard;
@@ -59,7 +58,8 @@ public class GraphicChessBoard extends JPanel {
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
-								cpuMove = engine.calcBestMove(board, moveCounter == 1 ? 8 : 10);
+								cpuMove = engine.calcBestMove(board, moveCounter < 18 ? 6 : 8);
+								// cpuMove = engine.calcBestMove(board, 6);
 
 								if (board.getSide() == 0) {
 									board.doWhiteMove(cpuMove);
