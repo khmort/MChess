@@ -37,7 +37,7 @@ public class Test {
 		
 		chessPanel.add(buttonsPanel, "South");
 		
-		SimpleChessBoard chessboard = new SimpleChessBoard("1r4nr/1bpk1q2/p1p2bp1/1pP2p2/1P1P3B/3B1N1P/P4PP1/R2QR1K1 b - - 0 20");
+		SimpleChessBoard chessboard = new SimpleChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 		
 		GraphicChessBoard gchessboard = new GraphicChessBoard(chessboard);
 		

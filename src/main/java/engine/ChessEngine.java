@@ -8,13 +8,15 @@ import java.util.Random;
 import chessboard.ChessBoard;
 import chessboard.Move;
 import chessboard.SimpleChessBoard;
-import chessboard.graphics.GraphicChessBoard;
+import engine.tt.Flag;
+import engine.tt.Infos;
+import engine.tt.TranspositionTable;
 import utils.BitTools;
 
 public class ChessEngine {
 
 	public ChessEngine() {
-		// tt = new TranspositionTable(100_000_000);
+		tt = new TranspositionTable(10_000_000, 8);
 	}
 
 	public Move calcBestMove(SimpleChessBoard scb, int depth) {
@@ -24,17 +26,15 @@ public class ChessEngine {
 
 		long time = System.currentTimeMillis();
 		visits = 0;
-		// tt.remove(scb);
+
 		minimax(depth, scb, NEG_INF, POS_INF);
+		
 		System.out.println("Visits: " + visits);
 		System.out.println("Time: " + (System.currentTimeMillis() - time) / 1000.0 + " sec");
 		Move minimaxMove = nodeMoves[depth - 1];
 
 		System.out.println("Chain:");
 		System.out.println(Arrays.deepToString(nodeMoves));
-
-		nodes = null;
-		nodeMoves = null;
 
 		return minimaxMove;
 	}
@@ -48,6 +48,20 @@ public class ChessEngine {
 			return getBoardScore(simpleBoard);
 		}
 
+		Infos infs = tt.get(simpleBoard, depth);
+
+		if (infs != null) {
+			if (infs.f == Flag.LOWER && infs.score >= beta) {
+				return infs.score;
+			}
+			if (infs.f == Flag.UPPER && infs.score <= alpha) {
+				return infs.score;
+			}
+			if (infs.f == Flag.EXACT) {
+				return infs.score;
+			}
+		}
+
 		List<Move> moves = simpleBoard.generateMoves();
 		Collections.shuffle(moves);
 		moves.sort(moveSorter);
@@ -55,21 +69,26 @@ public class ChessEngine {
 
 		if (simpleBoard.getSide() == 0) {
 			for (Move move : moves) {
+
 				simpleBoard.doMove(move);
 				if (simpleBoard.isWhiteKingOnFire()) {
 					simpleBoard.undoMove(move);
 					continue;
 				}
+
 				score = minimax(depth - 1, simpleBoard, alpha, beta);
 				simpleBoard.undoMove(move);
+
 				if (score > alpha) {
 					alpha = score;
 					nodeMoves[depth - 1] = move;
 				}
 				if (score >= beta) {
+					tt.put(simpleBoard, score, Flag.LOWER, depth);
 					return score;
 				}
 			}
+			tt.put(simpleBoard, alpha, Flag.EXACT, depth);
 			return alpha;
 		} else {
 			for (Move move : moves) {
@@ -85,9 +104,11 @@ public class ChessEngine {
 					nodeMoves[depth - 1] = move;
 				}
 				if (score <= alpha) {
+					tt.put(simpleBoard, score, Flag.UPPER, depth);
 					return score;
 				}
 			}
+			tt.put(simpleBoard, beta, Flag.EXACT, depth);
 			return beta;
 		}
 
@@ -128,7 +149,7 @@ public class ChessEngine {
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.0, 0, 0, 0, 0, 0, 0, 0, 0, 1000.0, 0, 0, 3.5, 0, 1.0, 24.0, 6.0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4.0, 0, 0, 0, 0, 0, 0, 0, 0, -1000.0, 0, 0, -3.5, 0, -1.0, -24.0,
 			-6.0 };
-
+	
 	protected static final Comparator<Move> moveSorter = new Comparator<Move>() {
 		@Override
 		public int compare(Move arg0, Move arg1) {
