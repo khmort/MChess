@@ -17,6 +17,12 @@ import chessboard.Move;
 import chessboard.SimpleChessBoard;
 import chessboard.Square;
 import engine.ChessEngine;
+import pieces.Bishop;
+import pieces.King;
+import pieces.Knight;
+import pieces.Pawn;
+import pieces.Queen;
+import pieces.Rook;
 import utils.BitTools;
 
 public class GraphicChessBoard extends JPanel {
@@ -44,28 +50,24 @@ public class GraphicChessBoard extends JPanel {
 							.orElse(null);
 
 					if (m != null) {
-						if (board.getSide() == 0) {
-							board.doWhiteMove(m);
-						} else {
-							board.doBlackMove(m);
-						}
+
+						m.print();
+
+						board.doMove(m);
+						board.print();
 
 						Thread engineThread = new Thread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									Thread.sleep(100);
+									Thread.sleep(250);
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
-								cpuMove = engine.calcBestMove(board, moveCounter < 18 ? 6 : 8);
-								// cpuMove = engine.calcBestMove(board, 6);
+								cpuMove = engine.calcBestMove(board, 8);
 
-								if (board.getSide() == 0) {
-									board.doWhiteMove(cpuMove);
-								} else {
-									board.doBlackMove(cpuMove);
-								}
+								board.doMove(cpuMove);
+								board.print();
 
 								repaint();
 							}
@@ -101,12 +103,38 @@ public class GraphicChessBoard extends JPanel {
 					}
 
 					if (clickedPiece != '-') {
+
 						selectedPiece = clickedPiece;
 						selectedSquare = clickedSquare;
-						SimpleChessBoard copy = board.makeCopy();
+
+						ChessBoard copy = new ChessBoard();
+						for (char pieceName : ChessBoard.NAMES) {
+							copy.setBitboard(pieceName, board.getBitboard(pieceName));
+						}
 						copy.setBitboard(selectedPiece, BitTools.createBoard(selectedSquare));
-						legalMoves = copy.generateMoves(selectedPiece);
-						//Move.printMoves(legalMoves);
+						copy.castleRight = board.castleRight;
+						copy.setSide(board.getSide());
+						copy.squareToName = board.squareToName;
+						copy.updateOccupancies();
+
+						legalMoves.clear();
+						if (selectedPiece == 'P' || selectedPiece == 'p') {
+							Pawn.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
+						} else if (selectedPiece == 'K' || selectedPiece == 'k') {
+							King.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
+						} else if (selectedPiece == 'Q' || selectedPiece == 'q') {
+							Queen.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
+						} else if (selectedPiece == 'B' || selectedPiece == 'b') {
+							Bishop.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
+						} else if (selectedPiece == 'R' || selectedPiece == 'r') {
+							Rook.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
+						} else if (selectedPiece == 'N' || selectedPiece == 'n') {
+							Knight.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
+						}
+
+						for (Move m : legalMoves) {
+							m.print();
+						}
 					}
 
 				}

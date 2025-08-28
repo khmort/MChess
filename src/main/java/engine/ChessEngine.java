@@ -8,6 +8,7 @@ import java.util.Random;
 import chessboard.ChessBoard;
 import chessboard.Move;
 import chessboard.SimpleChessBoard;
+import chessboard.graphics.GraphicChessBoard;
 import utils.BitTools;
 
 public class ChessEngine {
@@ -47,61 +48,46 @@ public class ChessEngine {
 			return getBoardScore(simpleBoard);
 		}
 
-		// Infos infs = tt.get(simpleBoard);
-
-		// if (infs != null) {
-		// 	if (infs.depth >= depth) {
-		// 		if (infs.f == Flag.LOWER && infs.score >= beta) {
-		// 			return infs.score;
-		// 		}
-		// 		else if (infs.f == Flag.UPPER && infs.score <= alpha) {
-		// 			return infs.score;
-		// 		} else {
-		// 			return infs.score;
-		// 		}
-		// 	}
-		// }
-
 		List<Move> moves = simpleBoard.generateMoves();
 		Collections.shuffle(moves);
 		moves.sort(moveSorter);
-
-		SimpleChessBoard copy;
 		double score;
 
 		if (simpleBoard.getSide() == 0) {
 			for (Move move : moves) {
-				copy = simpleBoard.makeCopy();
-				copy.doWhiteMove(move);
-				if (copy.isWhiteKingOnFire()) continue;
-				score = minimax(depth - 1, copy, alpha, beta);
+				simpleBoard.doMove(move);
+				if (simpleBoard.isWhiteKingOnFire()) {
+					simpleBoard.undoMove(move);
+					continue;
+				}
+				score = minimax(depth - 1, simpleBoard, alpha, beta);
+				simpleBoard.undoMove(move);
 				if (score > alpha) {
 					alpha = score;
 					nodeMoves[depth - 1] = move;
 				}
 				if (score >= beta) {
-					// tt.put(simpleBoard, score, Flag.LOWER, depth);
 					return score;
 				}
 			}
-			// tt.put(simpleBoard, alpha, Flag.EXACT, depth);
 			return alpha;
 		} else {
 			for (Move move : moves) {
-				copy = simpleBoard.makeCopy();
-				copy.doBlackMove(move);
-				if (copy.isBlackKingOnFire()) continue;
-				score = minimax(depth - 1, copy, alpha, beta);
+				simpleBoard.doMove(move);
+				if (simpleBoard.isBlackKingOnFire()) {
+					simpleBoard.undoMove(move);
+					continue;
+				}
+				score = minimax(depth - 1, simpleBoard, alpha, beta);
+				simpleBoard.undoMove(move);
 				if (score < beta) {
 					beta = score;
 					nodeMoves[depth - 1] = move;
 				}
 				if (score <= alpha) {
-					// tt.put(simpleBoard, score, Flag.UPPER, depth);
 					return score;
 				}
 			}
-			// tt.put(simpleBoard, beta, Flag.EXACT, depth);
 			return beta;
 		}
 

@@ -13,12 +13,14 @@ import chessboard.SimpleChessBoard;
 import pieces.Bishop;
 import pieces.King;
 import pieces.Knight;
+import pieces.Pawn;
 import pieces.Rook;
 
 public class Test {
 
 	public static void main(String[] args) throws NumberFormatException, ClassNotFoundException, IOException {
 		
+		Pawn.init();
 		Bishop.init();
 		Rook.init();
 		Knight.init();
@@ -35,7 +37,7 @@ public class Test {
 		
 		chessPanel.add(buttonsPanel, "South");
 		
-		SimpleChessBoard chessboard = new SimpleChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e3 0 1");
+		SimpleChessBoard chessboard = new SimpleChessBoard("1r4nr/1bpk1q2/p1p2bp1/1pP2p2/1P1P3B/3B1N1P/P4PP1/R2QR1K1 b - - 0 20");
 		
 		GraphicChessBoard gchessboard = new GraphicChessBoard(chessboard);
 		
@@ -45,7 +47,8 @@ public class Test {
 		cpu.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				chessboard.doWhiteMove(Move.parseString("e7e5", chessboard));
+				Move predefMove = new Move('P', Move.NULL_CHAR, Move.NULL_CHAR, 52, 36, false, true, false, false, 0b1111);
+				chessboard.doMove(predefMove);
 				gchessboard.repaint();
 			}
 		});

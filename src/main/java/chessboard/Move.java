@@ -1,5 +1,8 @@
 package chessboard;
 
+import utils.BitTools;
+import utils.textural_table.TextTable;
+
 public class Move {
 	
 	public Move(char pieceName, char targetName, char promotedName, int sourceSquare, int targetSquare, boolean isCaptureMove, boolean isDoublePush,
@@ -29,7 +32,7 @@ public class Move {
 
 	public static Move createCastleMove(char pieceName, int sourceSquare, int targetSquare, int castleRight) {
 		return new Move(pieceName, NULL_CHAR, NULL_CHAR, sourceSquare, targetSquare,
-					false, false, false, false, castleRight);
+					false, false, true, false, castleRight);
 	}
 
 	public static Move createPromoteMove(char pieceName, char targetName, int sourceSquare, int targetSquare,
@@ -38,9 +41,35 @@ public class Move {
 					isCaptureMove, false, false, true, castleRight);
 	}
 
-	@Override
-	public String toString() {
-		return "[name=" + pieceName + ", target-name=" + targetName + ", promote-to=" + promotedName + ", source-square=" + sourceSquare + ", target-square=" + targetSquare + ", {capture double-push castle promote " + (isCaptureMove ? "1" : "0") + " " + (isDoublePush ? "1" : "0") + " " + (isCastleMove ? "1" : "0") + " " + (isPromoteMove ? "1" : "0") + "}, castle-right=" + castleRight + "]";
+	public void print() {
+		TextTable table = new TextTable(100);
+		table.addCell("Source Name");
+		table.addCell("Target Name");
+		table.addCell("Promoted Name");
+		table.addCell("Source Square");
+		table.addCell("Target Square");
+		table.addCell("Capture Move?");
+		table.addCell("Double-push Move?");
+		table.addCell("Castle Move?");
+		table.addCell("Promote Move?");
+		table.addCell("Castling right");
+		table.addRow();
+		table.addCell((pieceName == 0 ? "0" : (char) pieceName + ""));
+		table.addCell((targetName == 0 ? "0" : (char) targetName + ""));
+		table.addCell((promotedName == 0 ? "0" : (char) promotedName + ""));
+		table.addCell(sourceSquare + " (r: " + (sourceSquare / 8) + " c: " + (sourceSquare % 8) + ")");
+		table.addCell(targetSquare + " (r: " + (targetSquare / 8) + " c: " + (targetSquare % 8) + ")");
+		table.addCell(isCaptureMove ? "1" : "-");
+		table.addCell(isDoublePush ? "1" : "-");
+		table.addCell(isCastleMove ? "1" : "-");
+		table.addCell(isPromoteMove ? "1" : "-");
+		table.addCell(
+			BitTools.getBit(castleRight, 0) + " " +
+			BitTools.getBit(castleRight, 1) + " " +
+			BitTools.getBit(castleRight, 2) + " " +
+			BitTools.getBit(castleRight, 3));
+		table.render();
+		table.drawTable();
 	}
 
 	public char pieceName;

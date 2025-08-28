@@ -92,26 +92,22 @@ public class Pawn {
 
 			}
 
-			// محاسبه حرکات ساده
-			// 1. حرکت promote
-			if (Square.inRow(color == 0 ? 2 : 7, sourceSquare)) {
-				moves.add(
-					Move.createPromoteMove(forPiece, Move.NULL_CHAR, sourceSquare,
-											sourceSquare + (color == 0 ? -8 : 8),
-											false, color == 0 ? 'Q' : 'q', board.castleRight)
-				);
-				moves.add(
-					Move.createPromoteMove(forPiece, Move.NULL_CHAR, sourceSquare,
-											sourceSquare + (color == 0 ? -8 : 8),
-											false, color == 0 ? 'N' : 'n', board.castleRight)
-				);
-			} else {
-				
-				if (board.pieceAt(sourceSquare + (color == 0 ? -8 : 8)) == 0) {
+			int forwardSquare = sourceSquare + (color == 0 ? -8 : 8);
+			if (forwardSquare >= 0 && forwardSquare < 64 && board.pieceAt(forwardSquare) == 0) {
+				if (Square.inRow(color == 0 ? 2 : 7, sourceSquare)) {
+					moves.add(
+						Move.createPromoteMove(forPiece, Move.NULL_CHAR, sourceSquare, forwardSquare,
+												false, color == 0 ? 'Q' : 'q', board.castleRight)
+					);
+					moves.add(
+						Move.createPromoteMove(forPiece, Move.NULL_CHAR, sourceSquare, forwardSquare,
+												false, color == 0 ? 'N' : 'n', board.castleRight)
+					);
+				} else {
 					// 2. یک واحد به سمت جلو
 					moves.add(
 						new Move(forPiece, Move.NULL_CHAR, Move.NULL_CHAR, sourceSquare,
-								sourceSquare + (color == 0 ? -8 : 8), false,
+								forwardSquare, false,
 								false, false, false, board.castleRight)
 					);
 
@@ -119,13 +115,13 @@ public class Pawn {
 					if (Square.inRow(color == 0 ? 7 : 2, sourceSquare)) {
 						if (board.pieceAt(sourceSquare + (color == 0 ? -16 : 16)) == 0) {
 							moves.add(
-								Move.createDoublePushMove(forPiece, sourceSquare, sourceSquare + (color == 0 ? -16 : 16), board.castleRight)
+								Move.createDoublePushMove(forPiece, sourceSquare, forwardSquare + (color == 0 ? -8 : 8), board.castleRight)
 							);
 						}
 					}
 				}
 			}
-
+			
 		}
 	}
 

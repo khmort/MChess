@@ -63,17 +63,14 @@ public class King {
 		}
 
 		if (board.canCastle(color, 0) == 1) {
-			if (board.pieceAt(color == 0 ? 57 : 1) == 0 &&
-					board.pieceAt(color == 0 ? 58 : 2) == 0 &&
-					board.pieceAt(color == 0 ? 59 : 3) == 0) {
+			if ((board.getOccupancies(2) & (color == 0 ? WHITE_QUEEN_SIDE_OCC : BLACK_QUEEN_SIDE_OCC)) == 0) {
 				moves.add(
 					Move.createCastleMove(forPiece, sourceSquare, color == 0 ? 58 : 2, board.castleRight)
 				);
 			}
 		}
 		if (board.canCastle(color, 1) == 1) {
-			if (board.pieceAt(color == 0 ? 61 : 5) == 0 &&
-					board.pieceAt(color == 0 ? 62 : 6) == 0) {
+			if ((board.getOccupancies(2) & (color == 0 ? WHITE_KING_SIDE_OCC : BLACK_KING_SIDE_OCC)) == 0) {
 				moves.add(
 					Move.createCastleMove(forPiece, sourceSquare, color == 0 ? 62 : 6, board.castleRight)
 				);
@@ -81,6 +78,11 @@ public class King {
 		}
 
 	}
+
+	private static long BLACK_QUEEN_SIDE_OCC = 0x000000000000000el;
+	private static long BLACK_KING_SIDE_OCC = 0x0000000000000060l;
+	private static long WHITE_QUEEN_SIDE_OCC = 0x0e00000000000000l;
+	private static long WHITE_KING_SIDE_OCC = 0x6000000000000000l;
 
 	public static long[] attacksBySquare;
 }

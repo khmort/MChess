@@ -1,11 +1,8 @@
 package chessboard;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Queue;
-
 import pieces.Bishop;
 import pieces.King;
 import pieces.Knight;
@@ -141,7 +138,7 @@ public class ChessBoard {
 	 * @return آیا می توانید با رنگ مهره و جهت داده شده قلعه کنید؟
 	 */
 	public int canCastle(int side, int queenOrKingSide) {
-		return ((castleRight >>> (side * 2)) >>> queenOrKingSide) & 0b1;
+		return ((castleRight >>> (side * 2)) >>> queenOrKingSide) & 1;
 	}
 
 	/**
@@ -184,14 +181,14 @@ public class ChessBoard {
 		String castleStatus = fields[2];
 
 		HashMap<Character, Integer> charToStatus = new HashMap<>(5);
-		charToStatus.put('K', 0b0100);
-		charToStatus.put('Q', 0b1000);
-		charToStatus.put('k', 0b0001);
-		charToStatus.put('q', 0b0010);
+		charToStatus.put('K', 0b0010);
+		charToStatus.put('Q', 0b0001);
+		charToStatus.put('k', 0b1000);
+		charToStatus.put('q', 0b0100);
 		charToStatus.put('-', 0);
 
 		for (char c : castleStatus.toCharArray()) {
-			castleRight |= charToStatus.get(c);
+			castleRight = castleRight | charToStatus.get(c);
 		}
 
 		// آپدیت آرایه squareToName
@@ -226,11 +223,8 @@ public class ChessBoard {
 		nameToOrder['p'] = 0L;
 	}
 
-	/**
-	 * prints view of the chess board with Unicode pieces on the console.
-	 */
 	public void print() {
-		System.out.println("    a b c d e f g h");
+		System.out.println("    a b c d e f g h    a b c d e f g h");
 		int row = 1;
 		System.out.print("\n" + row + "   ");
 		for (int i = 0; i < 64; i++) {
@@ -240,20 +234,50 @@ public class ChessBoard {
 			if (pieceName == 0) {
 				System.out.print(". ");
 			} else {
-				int j = 0;
-				while (j < NAMES.length) {
-					if (NAMES[j] == pieceName) break;
-					j++;
-				}
-				System.out.print(UNICODES[j] + " ");
+				System.out.print(getUnicode((char) pieceName) + " ");
 			}
 
-			if ((i + 1) % 8 == 0 && row < 8) {
+			if ((i + 1) % 8 == 0 && row <= 8) {
+
+				// رسم بورد بر اساس بیت بورد ها
+				System.out.print("   ");
+				int j = (row - 1) * 8;
+				char piece;
+				while (j < row * 8) {
+					piece = 0;
+					for (char name : NAMES) {
+						long bb = getBitboard(name);
+						if (BitTools.getBit(bb, j) == 1) {
+							piece = name;
+						}
+					}
+					if (piece == 0) {
+						System.out.print(". ");
+					} else {
+						System.out.print(getUnicode(piece) + " ");
+					}
+					j++;
+				}
+
 				row++;
-				System.out.print("\n" + row + "   ");
+				if (row <= 8)
+					System.out.print("\n" + row + "   ");
 			}
 		}
-		System.out.println("\n\n   Side=" + side + " (" + (side == 0 ? "white" : "black") + ")");
+		System.out.println("\n\n    side: " + side + " (" + (side == 0 ? "white" : "black") + ") castle: " +
+							BitTools.getBit(castleRight, 0) +
+							BitTools.getBit(castleRight, 1) +
+							BitTools.getBit(castleRight, 2) +
+							BitTools.getBit(castleRight, 3));
+	}
+
+	public static char getUnicode(char pieceName) {
+		int j = 0;
+		while (j < NAMES.length) {
+			if (NAMES[j] == pieceName) break;
+			j++;
+		}
+		return UNICODES[j];
 	}
 
 
@@ -265,7 +289,7 @@ public class ChessBoard {
 	protected long[] nameToOrder;
 	protected long[] occupancies;
 	public int castleRight;
-	protected int[] squareToName;
+	public int[] squareToName;
 
 
 	public static final char[] NAMES = new char[] { 'K', 'Q', 'R', 'B', 'N', 'P', 'k', 'q', 'r', 'b', 'n', 'p' };
