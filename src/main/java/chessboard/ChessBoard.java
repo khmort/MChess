@@ -9,7 +9,6 @@ import pieces.Knight;
 import pieces.Pawn;
 import pieces.Queen;
 import pieces.Rook;
-import utils.BitTools;
 
 public class ChessBoard {
 
@@ -54,34 +53,31 @@ public class ChessBoard {
 		List<Move> container = new ArrayList<>();
 
 		if (side == 0) {
-			Pawn.generateMoves(container, this, 'P', 0);
-			King.generateMoves(container, this, 'K', 0);
-			Queen.generateMoves(container, this, 'Q', 0);
+			Pawn.generateMoves(container, this, 'P', 0, 7, 2, -8, 'Q', 'N');
 			Bishop.generateMoves(container, this, 'B', 0);
-			Rook.generateMoves(container, this, 'R', 0);
 			Knight.generateMoves(container, this, 'N', 0);
+			Queen.generateMoves(container, this, 'Q', 0);
+			Rook.generateMoves(container, this, 'R', 0);
+			King.generateMoves(container, this, 'K', 0, 58, 62, King.WHITE_QUEEN_SIDE_OCC,
+				King.WHITE_KING_SIDE_OCC);
 		} else {
-			Pawn.generateMoves(container, this, 'p', 1);
-			King.generateMoves(container, this, 'k', 1);
-			Queen.generateMoves(container, this, 'q', 1);
+			Pawn.generateMoves(container, this, 'p', 1, 2, 7, 8, 'q', 'n');
 			Bishop.generateMoves(container, this, 'b', 1);
-			Rook.generateMoves(container, this, 'r', 1);
 			Knight.generateMoves(container, this, 'n', 1);
+			Queen.generateMoves(container, this, 'q', 1);
+			Rook.generateMoves(container, this, 'r', 1);
+			King.generateMoves(container, this, 'k', 1, 2, 6, King.BLACK_QUEEN_SIDE_OCC,
+				King.BLACK_KING_SIDE_OCC);
 		}
 		
 		return container;
 	}
 
-	/**
-	 * sets the entire piece positions of `pieceName`.
-	 * 
-	 * @param bitboard `pieceName` positions as bitboard.
-	 */
-	public void setBitboard(char pieceName, long bitboard) {
+	public void setBitboard(int pieceName, long bitboard) {
 		nameToOrder[pieceName] = bitboard;
 	}
 
-	public long getBitboard(char pieceName) {
+	public long getBitboard(int pieceName) {
 		return nameToOrder[pieceName];
 	}
 
@@ -163,7 +159,7 @@ public class ChessBoard {
 				if (c >= '0' && c <= '9') {
 					pointer += (c - '0');
 				} else {
-					nameToOrder[c] = BitTools.setBitOn(nameToOrder[c], row * 8 + pointer);
+					nameToOrder[c] |= 1l << (row * 8 + pointer);
 					pointer++;
 				}
 			}
@@ -195,9 +191,9 @@ public class ChessBoard {
 		for (char pieceName : NAMES) {
 			long board = getBitboard(pieceName);
 			while (board != 0) {
-				int pos = BitTools.getFirstSetBitPos(board);
+				int pos = Long.numberOfTrailingZeros(board);
 				squareToName[pos] = pieceName;
-				board = BitTools.setBitOff(board, pos);
+				board &= board - 1;
 			}
 		}
 
@@ -247,7 +243,7 @@ public class ChessBoard {
 					piece = 0;
 					for (char name : NAMES) {
 						long bb = getBitboard(name);
-						if (BitTools.getBit(bb, j) == 1) {
+						if (((bb >>> j) & 1) == 1) {
 							piece = name;
 						}
 					}
@@ -265,10 +261,10 @@ public class ChessBoard {
 			}
 		}
 		System.out.println("\n\n    side: " + side + " (" + (side == 0 ? "white" : "black") + ") castle: " +
-							BitTools.getBit(castleRight, 0) +
-							BitTools.getBit(castleRight, 1) +
-							BitTools.getBit(castleRight, 2) +
-							BitTools.getBit(castleRight, 3));
+							(castleRight & 1) + " " +
+							((castleRight >>> 1) & 1) + " " +
+							((castleRight >>> 2) & 1) + " " +
+							((castleRight >>> 3) & 1));
 	}
 
 	public static char getUnicode(char pieceName) {

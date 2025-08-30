@@ -11,12 +11,11 @@ import chessboard.SimpleChessBoard;
 import engine.tt.Flag;
 import engine.tt.Infos;
 import engine.tt.TranspositionTable;
-import utils.BitTools;
 
 public class ChessEngine {
 
 	public ChessEngine() {
-		tt = new TranspositionTable(10_000_000, 8);
+		// tt = new TranspositionTable(10_000_000, 8);
 	}
 
 	public Move calcBestMove(SimpleChessBoard scb, int depth) {
@@ -29,11 +28,11 @@ public class ChessEngine {
 
 		minimax(depth, scb, NEG_INF, POS_INF);
 		
-		System.out.println("Visits: " + visits);
-		System.out.println("Time: " + (System.currentTimeMillis() - time) / 1000.0 + " sec");
+		// System.out.println("Visits: " + visits);
+		// System.out.println("Time: " + (System.currentTimeMillis() - time) / 1000.0 + " sec");
 		Move minimaxMove = nodeMoves[depth - 1];
 
-		System.out.println("Chain:");
+		// System.out.println("Chain:");
 		System.out.println(Arrays.deepToString(nodeMoves));
 
 		return minimaxMove;
@@ -42,25 +41,26 @@ public class ChessEngine {
 	
 	public double minimax(int depth, SimpleChessBoard simpleBoard, double alpha, double beta) {
 
-		visits++;
+		// visits++;
 
 		if (depth == 0) {
+			// System.out.println(getBoardScore(simpleBoard));
 			return getBoardScore(simpleBoard);
 		}
 
-		Infos infs = tt.get(simpleBoard, depth);
+		// Infos infs = tt.get(simpleBoard, depth);
 
-		if (infs != null) {
-			if (infs.f == Flag.LOWER && infs.score >= beta) {
-				return infs.score;
-			}
-			if (infs.f == Flag.UPPER && infs.score <= alpha) {
-				return infs.score;
-			}
-			if (infs.f == Flag.EXACT) {
-				return infs.score;
-			}
-		}
+		// if (infs != null) {
+		// 	if (infs.f == Flag.LOWER && infs.score >= beta) {
+		// 		return infs.score;
+		// 	}
+		// 	if (infs.f == Flag.UPPER && infs.score <= alpha) {
+		// 		return infs.score;
+		// 	}
+		// 	if (infs.f == Flag.EXACT) {
+		// 		return infs.score;
+		// 	}
+		// }
 
 		List<Move> moves = simpleBoard.generateMoves();
 		Collections.shuffle(moves);
@@ -68,9 +68,11 @@ public class ChessEngine {
 		double score;
 
 		if (simpleBoard.getSide() == 0) {
+
 			for (Move move : moves) {
 
 				simpleBoard.doMove(move);
+
 				if (simpleBoard.isWhiteKingOnFire()) {
 					simpleBoard.undoMove(move);
 					continue;
@@ -79,36 +81,42 @@ public class ChessEngine {
 				score = minimax(depth - 1, simpleBoard, alpha, beta);
 				simpleBoard.undoMove(move);
 
+				if (score >= beta) {
+					// tt.put(simpleBoard, score, Flag.LOWER, depth);
+					return beta;
+				}
+
 				if (score > alpha) {
 					alpha = score;
 					nodeMoves[depth - 1] = move;
 				}
-				if (score >= beta) {
-					tt.put(simpleBoard, score, Flag.LOWER, depth);
-					return score;
-				}
 			}
-			tt.put(simpleBoard, alpha, Flag.EXACT, depth);
+			// tt.put(simpleBoard, alpha, Flag.EXACT, depth);
 			return alpha;
 		} else {
+
 			for (Move move : moves) {
 				simpleBoard.doMove(move);
+
 				if (simpleBoard.isBlackKingOnFire()) {
 					simpleBoard.undoMove(move);
 					continue;
 				}
+
 				score = minimax(depth - 1, simpleBoard, alpha, beta);
 				simpleBoard.undoMove(move);
+
+				if (score <= alpha) {
+					// tt.put(simpleBoard, score, Flag.UPPER, depth);
+					return alpha;
+				}
+
 				if (score < beta) {
 					beta = score;
 					nodeMoves[depth - 1] = move;
 				}
-				if (score <= alpha) {
-					tt.put(simpleBoard, score, Flag.UPPER, depth);
-					return score;
-				}
 			}
-			tt.put(simpleBoard, beta, Flag.EXACT, depth);
+			// tt.put(simpleBoard, beta, Flag.EXACT, depth);
 			return beta;
 		}
 
@@ -117,7 +125,7 @@ public class ChessEngine {
 	public double getBoardScore(ChessBoard cb) {
 		double score = 0.0;
 		for (char piece : ChessBoard.NAMES) {
-			score += BitTools.bitCount(cb.getBitboard(piece)) * PIECE_VALUE[piece];
+			score += Long.bitCount(cb.getBitboard(piece)) * PIECE_VALUE[piece];
 		}
 		return score;
 	}

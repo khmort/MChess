@@ -6,13 +6,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
 import org.nd4j.shade.guava.io.Files;
-
 import chessboard.ChessBoard;
 import chessboard.Move;
 import chessboard.function.MagicNumbers;
-import utils.BitTools;
 
 public class Rook {
 
@@ -38,7 +35,7 @@ public class Rook {
 		attacksCountBySquare = new int[64];
 		for (int i = 0; i < 64; i++) {
 			attacksBySquare[i] = MagicNumbers.removeBorder(i, MagicNumbers.getRawMoves(i, 0L));
-			attacksCountBySquare[i] = BitTools.bitCount(attacksBySquare[i]);
+			attacksCountBySquare[i] = Long.bitCount(attacksBySquare[i]);
 		}
 	}
 
@@ -46,41 +43,47 @@ public class Rook {
 		return maps[square][Bishop.hash(blocks & attacksBySquare[square], magicNumbers[square], attacksCountBySquare[square])];
 	}
 
-	public static void generateMoves(List<Move> moves, ChessBoard board, char forPiece, int color) {
+	public static void generateMoves(List<Move> moves, ChessBoard board, int forPiece, int color) {
 
-		int sourceSquare,
-			targetSquare,
-			targetName;
-
-		long rooks = board.getBitboard(forPiece),
-			allMoves,
-			definiteAttacks;
+		int sourceSquare;
+		int targetSquare;
+		int targetName;
+		long rooks = board.getBitboard(forPiece);
+		long allMoves;
+		long definiteAttacks;
+		long oppositeOcc = board.getOccupancies(color ^ 1);
+		long complementOcc = ~board.getOccupancies(color);
 
 		while (rooks != 0) {
 
-			sourceSquare = BitTools.getFirstSetBitPos(rooks);
-			rooks = BitTools.setBitOff(rooks, sourceSquare);
+			sourceSquare = Long.numberOfTrailingZeros(rooks);
+			rooks &= rooks - 1;
 
-			allMoves = getAttacksOnFly(sourceSquare, board.getOccupancies(2)) & ~board.getOccupancies(color);
-			definiteAttacks = allMoves & board.getOccupancies(color ^ 1);
+			allMoves = getAttacksOnFly(sourceSquare, board.getOccupancies(2)) & complementOcc;
+			definiteAttacks = allMoves & oppositeOcc;
 
 			while (definiteAttacks != 0) {
-				targetSquare = BitTools.getFirstSetBitPos(definiteAttacks);
+
+				targetSquare = Long.numberOfTrailingZeros(definiteAttacks);
+				definiteAttacks &= definiteAttacks - 1;
+				allMoves &= ~(1l << targetSquare);
+
 				targetName = board.pieceAt(targetSquare);
 				moves.add(
-					Move.createCaptureMove(forPiece, (char) targetName, sourceSquare, targetSquare, false, Move.NULL_CHAR, board.castleRight)
+					Move.createCaptureMove(forPiece, (char) targetName, sourceSquare, targetSquare,
+						false, Move.NULL, board.castleRight)
 				);
-				definiteAttacks = BitTools.setBitOff(definiteAttacks, targetSquare);
-				allMoves = BitTools.setBitOff(allMoves, targetSquare);
 			}
 
 			while (allMoves != 0) {
-				targetSquare = BitTools.getFirstSetBitPos(allMoves);
+
+				targetSquare = Long.numberOfTrailingZeros(allMoves);
+				allMoves &= allMoves - 1;
+
 				moves.add(
-					new Move(forPiece, Move.NULL_CHAR, Move.NULL_CHAR, sourceSquare, targetSquare,
+					new Move(forPiece, Move.NULL, Move.NULL, sourceSquare, targetSquare,
 						false, false, false, false, board.castleRight)
 				);
-				allMoves = BitTools.setBitOff(allMoves, targetSquare);
 			}
 		}
 

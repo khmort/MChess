@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Random;
 
 import chessboard.ChessBoard;
-import utils.BitTools;
 
 public class TranspositionTable {
 
@@ -62,13 +61,13 @@ public class TranspositionTable {
     }
 
     public Infos get(ChessBoard board, int biggerThanDepth) {
-        int i = depth - 1;
+        int i = biggerThanDepth - 1;
         long hash = hash(board);
-        while (i >= biggerThanDepth - 1) {
+        while (i < depth) {
             if (depthToTT[i].containsKey(hash)) {
                 return depthToTT[i].get(hash);
             }
-            i--;
+            i++;
         }
         return null;
     }
@@ -106,9 +105,9 @@ public class TranspositionTable {
         for (char name : ChessBoard.NAMES) {
             bb = board.getBitboard(name);
             while (bb != 0) {
-                first = BitTools.getFirstSetBitPos(bb);
+                first = Long.numberOfTrailingZeros(bb);
                 hash = hash ^ zobrist[name][first];
-                bb = BitTools.setBitOff(bb, first);
+                bb &= ~(1l << first);
             }
         }
         return hash;

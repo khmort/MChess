@@ -4,7 +4,6 @@ import java.util.List;
 
 import chessboard.ChessBoard;
 import chessboard.Move;
-import utils.BitTools;
 
 public class Knight {
 
@@ -16,59 +15,66 @@ public class Knight {
 	}
 
 	public static long getMaskAttacks(int square) {
-		long board = BitTools.createBoard(square), attacks = 0L;
-		BitTools.setBitOn(board, square);
-		attacks |= BitTools.shiftRight(board, 6);
-		attacks |= BitTools.shiftRight(board, 10);
-		attacks |= BitTools.shiftRight(board, 15);
-		attacks |= BitTools.shiftRight(board, 17);
-		attacks |= BitTools.shiftLeft(board, 6);
-		attacks |= BitTools.shiftLeft(board, 10);
-		attacks |= BitTools.shiftLeft(board, 15);
-		attacks |= BitTools.shiftLeft(board, 17);
-		if ((board & BitTools.not_ab_file) == 0) {
-			attacks &= BitTools.not_in_second_half;
-		} else if ((board & BitTools.not_gh_file) == 0) {
-			attacks &= BitTools.not_in_first_half;
+		long board = 1l << square, attacks = 0L;
+		if ((board & 0xfefefefefefefefel) != 0) {
+			attacks |= board << 15;
+			attacks |= board >>> 17;
+			if ((board & 0xfcfcfcfcfcfcfcfcl) != 0) {
+				attacks |= board << 6;
+				attacks |= board >>> 10;
+			}
+		}
+		if ((board & 0x7f7f7f7f7f7f7f7fl) != 0) {
+			attacks |= board >>> 15;
+			attacks |= board << 17;
+			if ((board & 0x3f3f3f3f3f3f3f3fl) != 0) {
+				attacks |= board >>> 6;
+				attacks |= board << 10;
+			}
 		}
 		return attacks;
 	}
 
-	public static void generateMoves(List<Move> moves, ChessBoard board, char forPiece, int color) {
+	public static void generateMoves(List<Move> moves, ChessBoard board, int forPiece, int color) {
 
-		int oppositeColor = color ^ 1,
-			sourceSquare,
-			targetName,
-			targetSquare;
-		
-		long knights = board.getBitboard(forPiece),
-				allMoves,
-				definiteAttacks;
+		int oppositeColor = color ^ 1;
+		int sourceSquare;
+		int targetName;
+		int targetSquare;
+		long knights = board.getBitboard(forPiece);
+		long allMoves;
+		long definiteAttacks;
+		long oppositeOcc = board.getOccupancies(oppositeColor);
+		long complementOcc = ~board.getOccupancies(color);
 		
 		while (knights != 0) {
-			sourceSquare = BitTools.getFirstSetBitPos(knights);
-			knights = BitTools.setBitOff(knights, sourceSquare);
+
+			sourceSquare = Long.numberOfTrailingZeros(knights);
+			knights &= knights - 1;
 			
-			allMoves = attacksBySquare[sourceSquare] & ~board.getOccupancies(color);
-			definiteAttacks = allMoves & board.getOccupancies(oppositeColor);
+			allMoves = attacksBySquare[sourceSquare] & complementOcc;
+			definiteAttacks = allMoves & oppositeOcc;
 
 			while (definiteAttacks != 0) {
-				targetSquare = BitTools.getFirstSetBitPos(definiteAttacks);
+				targetSquare = Long.numberOfTrailingZeros(definiteAttacks);
+				definiteAttacks &= definiteAttacks - 1;
+				allMoves &= ~(1l << targetSquare);
+
 				targetName = board.pieceAt(targetSquare);
 				moves.add(
-					Move.createCaptureMove(forPiece, (char) targetName, sourceSquare, targetSquare, false, Move.NULL_CHAR, board.castleRight)
+					Move.createCaptureMove(forPiece, (char) targetName, sourceSquare, targetSquare,
+						false, Move.NULL, board.castleRight)
 				);
-				definiteAttacks = BitTools.setBitOff(definiteAttacks, targetSquare);
-				allMoves = BitTools.setBitOff(allMoves, targetSquare);
 			}
 
 			while (allMoves != 0) {
-				targetSquare = BitTools.getFirstSetBitPos(allMoves);
+				targetSquare = Long.numberOfTrailingZeros(allMoves);
+				allMoves &= allMoves - 1;
+
 				moves.add(
-					new Move(forPiece, Move.NULL_CHAR, Move.NULL_CHAR, sourceSquare, targetSquare,
+					new Move(forPiece, Move.NULL, Move.NULL, sourceSquare, targetSquare,
 						false, false, false, false, board.castleRight)
 				);
-				allMoves = BitTools.setBitOff(allMoves, targetSquare);
 			}
 		}
 

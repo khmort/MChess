@@ -1,11 +1,10 @@
 package chessboard;
 
-import utils.BitTools;
 import utils.textural_table.TextTable;
 
 public class Move {
 	
-	public Move(char pieceName, char targetName, char promotedName, int sourceSquare, int targetSquare, boolean isCaptureMove, boolean isDoublePush,
+	public Move(int pieceName, int targetName, int promotedName, int sourceSquare, int targetSquare, boolean isCaptureMove, boolean isDoublePush,
 			boolean isCastleMove, boolean isPromoteMove, int castleRight) {
 		this.pieceName = pieceName;
 		this.targetName = targetName;
@@ -19,24 +18,24 @@ public class Move {
 		this.castleRight = castleRight;
 	}
 
-	public static Move createDoublePushMove(char pieceName, int sourceSquare, int targetSquare, int castleRight) {
-		return new Move(pieceName, NULL_CHAR, NULL_CHAR, sourceSquare, targetSquare,
+	public static Move createDoublePushMove(int pieceName, int sourceSquare, int targetSquare, int castleRight) {
+		return new Move(pieceName, NULL, NULL, sourceSquare, targetSquare,
 				false, true, false, false, castleRight);
 	}
 
-	public static Move createCaptureMove(char pieceName, char targetName, int sourceSquare, int targetSquare,
-			boolean isPromoteMove, char promotedName, int castleRight) {
+	public static Move createCaptureMove(int pieceName, int targetName, int sourceSquare, int targetSquare,
+			boolean isPromoteMove, int promotedName, int castleRight) {
 		return new Move(pieceName, targetName, promotedName, sourceSquare, targetSquare,
 					true, false, false, isPromoteMove, castleRight);
 	}
 
-	public static Move createCastleMove(char pieceName, int sourceSquare, int targetSquare, int castleRight) {
-		return new Move(pieceName, NULL_CHAR, NULL_CHAR, sourceSquare, targetSquare,
+	public static Move createCastleMove(int pieceName, int sourceSquare, int targetSquare, int castleRight) {
+		return new Move(pieceName, NULL, NULL, sourceSquare, targetSquare,
 					false, false, true, false, castleRight);
 	}
 
-	public static Move createPromoteMove(char pieceName, char targetName, int sourceSquare, int targetSquare,
-			boolean isCaptureMove, char promotedName, int castleRight) {
+	public static Move createPromoteMove(int pieceName, int targetName, int sourceSquare, int targetSquare,
+			boolean isCaptureMove, int promotedName, int castleRight) {
 		return new Move(pieceName, targetName, promotedName, sourceSquare, targetSquare,
 					isCaptureMove, false, false, true, castleRight);
 	}
@@ -64,17 +63,31 @@ public class Move {
 		table.addCell(isCastleMove ? "1" : "-");
 		table.addCell(isPromoteMove ? "1" : "-");
 		table.addCell(
-			BitTools.getBit(castleRight, 0) + " " +
-			BitTools.getBit(castleRight, 1) + " " +
-			BitTools.getBit(castleRight, 2) + " " +
-			BitTools.getBit(castleRight, 3));
+			(castleRight & 1) + " " +
+			((castleRight >>> 1) & 1) + " " +
+			((castleRight >>> 2) & 1) + " " +
+			((castleRight >>> 3) & 1)
+		);
 		table.render();
 		table.drawTable();
 	}
 
-	public char pieceName;
-	public char targetName;
-	public char promotedName;
+	@Override
+	public String toString() {
+		String res = (char) pieceName + "";
+		if (isCaptureMove) {
+			res += "×";
+		}
+		res += Square.SQUARES_NAME[targetSquare];
+		if (isPromoteMove) {
+			res += (char) promotedName;
+		}
+		return res;
+	}
+
+	public int pieceName;
+	public int targetName;
+	public int promotedName;
 	public int sourceSquare;
 	public int targetSquare;
 	public boolean isCaptureMove;
@@ -83,5 +96,5 @@ public class Move {
 	public boolean isPromoteMove;
 	public int castleRight;
 
-	public static final char NULL_CHAR = '-';
+	public static final int NULL = '-';
 }

@@ -3,7 +3,6 @@ package pieces;
 import java.util.List;
 import chessboard.ChessBoard;
 import chessboard.Move;
-import utils.BitTools;
 
 public class King {
 
@@ -15,74 +14,77 @@ public class King {
 	}
 
 	public static long getMaskAttacks(int square) {
-		long board = BitTools.createBoard(square), attacks = 0L;
-		if ((board & BitTools.not_a_file) != 0) {
-			attacks |= BitTools.shiftLeft(board, 1);
-			attacks |= BitTools.shiftLeft(board, 8);
-			attacks |= BitTools.shiftLeft(board, 9);
-			attacks |= BitTools.shiftRight(board, 7);
-			attacks |= BitTools.shiftRight(board, 8);
+		long board = 1l << square, attacks = 0L;
+		// not a-file
+		if ((board & 0xfefefefefefefefel) != 0) {
+			attacks |= board >>> 1;
+			attacks |= board >>> 9;
+			attacks |= board << 7;
 		}
-		if ((board & BitTools.not_h_file) != 0) {
-			attacks |= BitTools.shiftRight(board, 1);
-			attacks |= BitTools.shiftRight(board, 8);
-			attacks |= BitTools.shiftRight(board, 9);
-			attacks |= BitTools.shiftLeft(board, 7);
-			attacks |= BitTools.shiftLeft(board, 8);
+		// not h-file
+		if ((board & 0x7f7f7f7f7f7f7f7fl) != 0) {
+			attacks |= board << 1;
+			attacks |= board << 9;
+			attacks |= board >>> 7;
 		}
+		attacks |= board << 8;
+		attacks |= board >>> 8;
 		return attacks;
 	}
 
-	public static void generateMoves(List<Move> moves, ChessBoard board, char forPiece, int color) {
+	public static void generateMoves(List<Move> moves, ChessBoard board, int forPiece, int color, int qsCastleSquare,
+			int ksCastleSquare, long queenSideOcc, long kingSideOcc) {
 
-		int sourceSquare = BitTools.getFirstSetBitPos(board.getBitboard(forPiece)),
-			oppositeColor = color ^ 1,
-			targetName,
-			targetSquare;
-
+		int sourceSquare = Long.numberOfTrailingZeros(board.getBitboard(forPiece));
+		int oppositeColor = color ^ 1;
+		int targetName;
+		int targetSquare;
 		long allMoves = attacksBySquare[sourceSquare] & ~board.getOccupancies(color);
 		long definiteAttacks = allMoves & board.getOccupancies(oppositeColor);
 
 		while (definiteAttacks != 0) {
-			targetSquare = BitTools.getFirstSetBitPos(definiteAttacks);
+
+			targetSquare = Long.numberOfTrailingZeros(definiteAttacks);
+			definiteAttacks &= definiteAttacks - 1;
+			allMoves &= ~(1l << targetSquare);
+
 			targetName = board.pieceAt(targetSquare);
 			moves.add(
-				Move.createCaptureMove(forPiece, (char) targetName, sourceSquare, targetSquare, false, Move.NULL_CHAR, board.castleRight)
+				Move.createCaptureMove(forPiece, targetName, sourceSquare, targetSquare, false, Move.NULL, board.castleRight)
 			);
-			definiteAttacks = BitTools.setBitOff(definiteAttacks, targetSquare);
-			allMoves = BitTools.setBitOff(allMoves, targetSquare);
 		}
 
 		while (allMoves != 0) {
-			targetSquare = BitTools.getFirstSetBitPos(allMoves);
+			targetSquare = Long.numberOfTrailingZeros(allMoves);
+			allMoves &= allMoves - 1;
+
 			moves.add(
-				new Move(forPiece, Move.NULL_CHAR, Move.NULL_CHAR, sourceSquare, targetSquare,
+				new Move(forPiece, Move.NULL, Move.NULL, sourceSquare, targetSquare,
 					false, false, false, false, board.castleRight)
 			);
-			allMoves = BitTools.setBitOff(allMoves, targetSquare);
 		}
 
 		if (board.canCastle(color, 0) == 1) {
-			if ((board.getOccupancies(2) & (color == 0 ? WHITE_QUEEN_SIDE_OCC : BLACK_QUEEN_SIDE_OCC)) == 0) {
+			if ((board.getOccupancies(2) & queenSideOcc) == 0) {
 				moves.add(
-					Move.createCastleMove(forPiece, sourceSquare, color == 0 ? 58 : 2, board.castleRight)
+					Move.createCastleMove(forPiece, sourceSquare, qsCastleSquare, board.castleRight)
 				);
 			}
 		}
 		if (board.canCastle(color, 1) == 1) {
-			if ((board.getOccupancies(2) & (color == 0 ? WHITE_KING_SIDE_OCC : BLACK_KING_SIDE_OCC)) == 0) {
+			if ((board.getOccupancies(2) & kingSideOcc) == 0) {
 				moves.add(
-					Move.createCastleMove(forPiece, sourceSquare, color == 0 ? 62 : 6, board.castleRight)
+					Move.createCastleMove(forPiece, sourceSquare, ksCastleSquare, board.castleRight)
 				);
 			}
 		}
 
 	}
 
-	private static long BLACK_QUEEN_SIDE_OCC = 0x000000000000000el;
-	private static long BLACK_KING_SIDE_OCC = 0x0000000000000060l;
-	private static long WHITE_QUEEN_SIDE_OCC = 0x0e00000000000000l;
-	private static long WHITE_KING_SIDE_OCC = 0x6000000000000000l;
+	public static long BLACK_QUEEN_SIDE_OCC = 0x000000000000000el;
+	public static long BLACK_KING_SIDE_OCC = 0x0000000000000060l;
+	public static long WHITE_QUEEN_SIDE_OCC = 0x0e00000000000000l;
+	public static long WHITE_KING_SIDE_OCC = 0x6000000000000000l;
 
 	public static long[] attacksBySquare;
 }

@@ -12,7 +12,7 @@ import java.util.Random;
 
 import org.nd4j.shade.guava.io.Files;
 
-import utils.BitTools;
+// import utils.BitTools;
 
 public class MagicNumbers {
 
@@ -30,8 +30,8 @@ public class MagicNumbers {
         }
 
         // برای تست
-        BitTools.print(possiblelMoves[0]);
-        BitTools.print(possiblelMoves[28]);
+        // BitTools.print(possiblelMoves[0]);
+        // BitTools.print(possiblelMoves[28]);
 
         Random rand = new Random();
         createFolder("/home/khmort/Programming/JAVA projects/MChess/magic numbers/bishop");
@@ -42,7 +42,7 @@ public class MagicNumbers {
         for (int square = 0; square < 64; square++) {
 
             // چند بیت در حرکات ممکن روشن هستند
-            int bitCount = BitTools.bitCount(possiblelMoves[square]);
+            int bitCount = Long.bitCount(possiblelMoves[square]);
 
             // آرایه bright شامل اندیس بیت های روشن است
             int[] brights = getBrightBits(possiblelMoves[square]);
@@ -112,7 +112,7 @@ public class MagicNumbers {
         Long moves = removeBorder(5, getBishopRawMoves(5, 0L));
         int[] brights = getBrightBits(moves);
         Long block = 8657588224L;
-        BitTools.print(block);
+        // BitTools.print(block);
 
         // load
         String folder = "/home/khmort/Programming/JAVA projects/MChess/magic numbers/bishop";
@@ -122,7 +122,7 @@ public class MagicNumbers {
         ois.close();
 
         System.out.println("map[31] " + map[30]);
-        BitTools.print(map[(int) ((magic * block) >>> (64 - brights.length))]);
+        // BitTools.print(map[(int) ((magic * block) >>> (64 - brights.length))]);
 
         System.exit(0);
     }
@@ -134,17 +134,17 @@ public class MagicNumbers {
     public static Long getBlock(int[] brights, int ith) {
         Long res = 0L;
         for (int i=0; i<brights.length; i++) {
-            if (BitTools.getBit(ith, i) == 1)
-                res = BitTools.setBitOn(res, brights[i]);
+            if ((ith >>> i) == 1)
+                res |= 1l << brights[i];
         }
         return res;
     }
 
     public static int[] getBrightBits(Long bitboard) {
-        int[] brights = new int[BitTools.bitCount(bitboard)];
+        int[] brights = new int[Long.bitCount(bitboard)];
         int count = 0;
         for (int i=0; i<64; i++) {
-            if (BitTools.getBit(bitboard, i) == 1) {
+            if ((bitboard >>> i) == 1) {
                 brights[count] = i;
                 count++;
             }
@@ -179,9 +179,9 @@ public class MagicNumbers {
             board = ~(down | right | left) & board;
         } else if (between(square, 56, 63)) {
             board = ~(top | right | left) & board;
-        } else if ((BitTools.createBoard(square) & left) != 0) {
+        } else if (((1l << square) & left) != 0) {
             board = ~(top | down | right) & board;
-        } else if ((BitTools.createBoard(square) & right) != 0) {
+        } else if (((1l << square) & right) != 0) {
             board = ~(top | down | left) & board;
         } else {
             board = ~(top | right | down | left) & board;
@@ -198,45 +198,45 @@ public class MagicNumbers {
         int r=row, c=col;
 
         while (c > -1) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             c -= 1;
         }
 
         r=row; c=col;
         while (c < 8) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             c += 1;
         }
 
         r=row; c=col;
         while (r < 8) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             r += 1;
         }
 
         r=row; c=col;
         while (r > -1) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             r -= 1;
         }
 
-        return BitTools.setBitOff(board, square);
+        return ~(1l << square) & board;
 
     }
 
@@ -247,49 +247,49 @@ public class MagicNumbers {
 
         int r=row, c=col;
         while (r > -1 && c > -1) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             c--;
             r--;
         }
 
         r=row; c=col;
         while (r < 8 && c > -1) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             c--;
             r++;
         }
 
         r=row; c=col;
         while (r < 8 && c < 8) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             r++;
             c++;
         }
 
         r=row; c=col;
         while (r > -1 && c < 8) {
-            if (BitTools.getBit(blocks, 8 * r + c) == 1) {
-                board = BitTools.setBitOn(board, 8 * r + c);
+            if ((blocks >>> (8 * r + c)) == 1) {
+                board |= 1l << (8 * r + c);
                 break;
             }
-            board = BitTools.setBitOn(board, 8 * r + c);
+            board |= 1l << (8 * r + c);
             r--;
             c++;
         }
 
-        return BitTools.setBitOff(board, square);
+        return ~(1l << square) & board;
 
     }
 
@@ -325,7 +325,7 @@ public class MagicNumbers {
         return target > org && target < dest;
     }
 
-    public static Long border = BitTools.createBoard(0, 1, 2, 3, 4, 5, 6, 7, 63, 62, 61, 60, 59, 58, 57, 56, 8, 16, 24, 32, 40, 48, 15, 23, 31, 39, 47, 55);
+    public static Long border = 0xff818181818181ffl;
     public static long top = 0x00000000000000ffL,
                        right = 0x8080808080808080L,
                        down = 0xff00000000000000L,

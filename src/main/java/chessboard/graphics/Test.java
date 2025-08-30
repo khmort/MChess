@@ -47,7 +47,8 @@ public class Test {
 		cpu.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				Move predefMove = new Move('P', Move.NULL_CHAR, Move.NULL_CHAR, 52, 36, false, true, false, false, 0b1111);
+				Move predefMove = new Move('P', Move.NULL, Move.NULL, 52, 36,
+					false, true, false, false, 0b1111);
 				chessboard.doMove(predefMove);
 				gchessboard.repaint();
 			}

@@ -1,14 +1,11 @@
 package chessboard;
 
-import org.nd4j.linalg.cpu.nativecpu.bindings.Nd4jCpu.square;
-
 import chessboard.function.AttackGeneratorFunction;
 import pieces.Bishop;
 import pieces.King;
 import pieces.Knight;
 import pieces.Queen;
 import pieces.Rook;
-import utils.BitTools;
 
 public class SimpleChessBoard extends ChessBoard {
 
@@ -17,7 +14,7 @@ public class SimpleChessBoard extends ChessBoard {
 	}
 
 	public void doMove(Move m) {
-
+		
 		if (m.pieceName == 'R') {
 			if (m.sourceSquare == 56) {
 				castleRight = castleRight & 0b1110;
@@ -59,7 +56,8 @@ public class SimpleChessBoard extends ChessBoard {
 				transfer(m.pieceName, m.sourceSquare, m.targetSquare);
 			}
 
-			nameToOrder[m.targetName] = BitTools.setBitOff(nameToOrder[m.targetName], m.targetSquare);
+			nameToOrder[m.targetName] &= ~(1l << m.targetSquare);
+			occupancies[NAME_TO_COLOR[m.targetName]] &= ~(1l << m.targetSquare);
 
 		} else if (m.isCastleMove) {
 			transfer(m.pieceName, m.sourceSquare, m.targetSquare);
@@ -90,7 +88,7 @@ public class SimpleChessBoard extends ChessBoard {
 			transfer(m.pieceName, m.sourceSquare, m.targetSquare);
 		}
 		side ^= 1;
-		updateOccupancies();
+		occupancies[2] = occupancies[0] | occupancies[1];
 	}
 
 	public void undoMove(Move m) {
@@ -100,7 +98,8 @@ public class SimpleChessBoard extends ChessBoard {
 			} else {
 				transfer(m.pieceName, m.targetSquare, m.sourceSquare);
 			}
-			setBitboard(m.targetName, BitTools.setBitOn(getBitboard(m.targetName), m.targetSquare));
+			nameToOrder[m.targetName] |= 1l << m.targetSquare;
+			occupancies[NAME_TO_COLOR[m.targetName]] |= 1l << m.targetSquare;
 			squareToName[m.targetSquare] = m.targetName;
 		} else if (m.isCastleMove) {
 			transfer(m.pieceName, m.targetSquare, m.sourceSquare);
@@ -128,27 +127,26 @@ public class SimpleChessBoard extends ChessBoard {
 
 		castleRight = m.castleRight;
 		side ^= 1;
-		updateOccupancies();
+		occupancies[2] = occupancies[0] | occupancies[1];
 	}
 
-	protected void transfer(char fromPiece, char toPiece, int from, int to) {
+	protected void transfer(int fromPiece, int toPiece, int from, int to) {
 		squareToName[from] = 0;
 		squareToName[to] = toPiece;
-		nameToOrder[fromPiece] = BitTools.setBitOff(nameToOrder[fromPiece], from);
-		nameToOrder[toPiece] = BitTools.setBitOn(nameToOrder[toPiece], to);
+		nameToOrder[fromPiece] &= ~(1l << from);
+		nameToOrder[toPiece] |= 1l << to;
+		// Occupancies
+		int color = NAME_TO_COLOR[fromPiece];
+		occupancies[color] = occupancies[color] & ~(1l << from) | (1l << to);
 	}
 
-	protected void transfer(char pieceName, int from, int to) {
+	protected void transfer(int pieceName, int from, int to) {
 		squareToName[from] = 0;
 		squareToName[to] = pieceName;
-		nameToOrder[pieceName] = BitTools.setBitOff(nameToOrder[pieceName], from);
-		nameToOrder[pieceName] = BitTools.setBitOn(nameToOrder[pieceName], to);
-	}
-
-	protected static long transfer(long board, int from, int to) {
-		board = BitTools.setBitOff(board, from);
-		board = BitTools.setBitOn(board, to);
-		return board;
+		nameToOrder[pieceName] = nameToOrder[pieceName] & ~(1l << from) | (1l << to);
+		// Occupancies
+		int color = NAME_TO_COLOR[pieceName];
+		occupancies[color] = occupancies[color] & ~(1l << from) | (1l << to);
 	}
 
 	public boolean hasConflict() {
@@ -156,7 +154,7 @@ public class SimpleChessBoard extends ChessBoard {
 			int cc = 0;
 			for (char name : NAMES) {
 				long bb = getBitboard(name);
-				if (BitTools.getBit(bb, i) == 1) {
+				if (((bb >>> i) & 1) == 1) {
 					cc++;
 					if (cc > 1) {
 						return true;
@@ -200,7 +198,7 @@ public class SimpleChessBoard extends ChessBoard {
 		attacskGenerators['P'] = new AttackGeneratorFunction() {
 			@Override
 			public long apply(long positions, long blocks) {
-				return ((positions & BitTools.not_a_file) >>> 9) | ((positions & BitTools.not_h_file) >>> 7);
+				return ((positions & 0xfefefefefefefefel) >>> 9) | ((positions & 0x7f7f7f7f7f7f7f7fl) >>> 7);
 			}
 		};
 
@@ -208,7 +206,7 @@ public class SimpleChessBoard extends ChessBoard {
 		attacskGenerators['p'] = new AttackGeneratorFunction() {
 			@Override
 			public long apply(long positions, long blocks) {
-				return ((positions & BitTools.not_a_file) << 7) | ((positions & BitTools.not_h_file) << 9);
+				return ((positions & 0xfefefefefefefefel) << 7) | ((positions & 0x7f7f7f7f7f7f7f7fl) << 9);
 			}
 		};
 
@@ -218,7 +216,7 @@ public class SimpleChessBoard extends ChessBoard {
 		attacskGenerators['K'] = new AttackGeneratorFunction() {
 			@Override
 			public long apply(long positions, long blocks) {
-				return King.attacksBySquare[BitTools.getFirstSetBitPos(positions)];
+				return King.attacksBySquare[Long.numberOfTrailingZeros(positions)];
 			}
 		};
 		// black king
@@ -232,9 +230,9 @@ public class SimpleChessBoard extends ChessBoard {
 				long attacks = 0L;
 				int square;
 				while (positions != 0) {
-					square = BitTools.getFirstSetBitPos(positions);
+					square = Long.numberOfTrailingZeros(positions);
 					attacks |= Queen.getAttacksOnFly(square, blocks);
-					positions = BitTools.setBitOff(positions, square);
+					positions &= positions - 1;
 				}
 				return attacks;
 			}
@@ -252,9 +250,9 @@ public class SimpleChessBoard extends ChessBoard {
 				long attacks = 0L;
 				int square;
 				while (positions != 0) {
-					square = BitTools.getFirstSetBitPos(positions);
+					square = Long.numberOfTrailingZeros(positions);
 					attacks |= Rook.getAttacksOnFly(square, blocks);
-					positions = BitTools.setBitOff(positions, square);
+					positions &= positions - 1;
 				}
 				return attacks;
 			}
@@ -271,9 +269,9 @@ public class SimpleChessBoard extends ChessBoard {
 				long attacks = 0L;
 				int square;
 				while (positions != 0) {
-					square = BitTools.getFirstSetBitPos(positions);
+					square = Long.numberOfTrailingZeros(positions);
 					attacks = attacks | Bishop.getAttacksOnFly(square, blocks);
-					positions = BitTools.setBitOff(positions, square);
+					positions &= positions - 1;
 				}
 				return attacks;
 			}
@@ -290,9 +288,9 @@ public class SimpleChessBoard extends ChessBoard {
 				long attacks = 0L;
 				int square;
 				while (positions != 0) {
-					square = BitTools.getFirstSetBitPos(positions);
+					square = Long.numberOfTrailingZeros(positions);
 					attacks |= Knight.attacksBySquare[square];
-					positions = BitTools.setBitOff(positions, square);
+					positions &= positions - 1;
 				}
 				return attacks;
 			}

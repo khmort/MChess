@@ -10,8 +10,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+
 import chessboard.ChessBoard;
 import chessboard.Move;
 import chessboard.SimpleChessBoard;
@@ -23,7 +26,6 @@ import pieces.Knight;
 import pieces.Pawn;
 import pieces.Queen;
 import pieces.Rook;
-import utils.BitTools;
 
 public class GraphicChessBoard extends JPanel {
 
@@ -35,6 +37,7 @@ public class GraphicChessBoard extends JPanel {
 	}
 
 	static int moveCounter = 0;
+	static Random rand = new Random();
 	private void initListeners() {
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -51,23 +54,31 @@ public class GraphicChessBoard extends JPanel {
 
 					if (m != null) {
 
-						m.print();
+						// m.print();
 
 						board.doMove(m);
-						board.print();
+						// board.print();
 
 						Thread engineThread = new Thread(new Runnable() {
 							@Override
 							public void run() {
 								try {
-									Thread.sleep(250);
+									Thread.sleep(100);
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
-								cpuMove = engine.calcBestMove(board, 8);
+
+								int depth;
+								if (rand.nextInt(0, 10) < 8) {
+									depth = rand.nextInt(6, 9);
+								} else {
+									depth = 9;
+								}
+								System.out.println("depth=" + depth);
+								cpuMove = engine.calcBestMove(board, depth);
 
 								board.doMove(cpuMove);
-								board.print();
+								// board.print();
 
 								repaint();
 							}
@@ -85,7 +96,7 @@ public class GraphicChessBoard extends JPanel {
 				} else {
 
 					char clickedPiece = '-';
-					long pos = BitTools.createBoard(clickedSquare);
+					long pos = 1l << clickedSquare;
 					if ((pos & board.getOccupancies(0)) != 0) {
 						for (char wp : ChessBoard.COLOR_TO_NAMES[0]) {
 							if ((pos & board.getBitboard(wp)) != 0) {
@@ -111,17 +122,23 @@ public class GraphicChessBoard extends JPanel {
 						for (char pieceName : ChessBoard.NAMES) {
 							copy.setBitboard(pieceName, board.getBitboard(pieceName));
 						}
-						copy.setBitboard(selectedPiece, BitTools.createBoard(selectedSquare));
+						copy.setBitboard(selectedPiece, 1l << selectedSquare);
 						copy.castleRight = board.castleRight;
 						copy.setSide(board.getSide());
 						copy.squareToName = board.squareToName;
 						copy.updateOccupancies();
 
 						legalMoves.clear();
-						if (selectedPiece == 'P' || selectedPiece == 'p') {
-							Pawn.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
-						} else if (selectedPiece == 'K' || selectedPiece == 'k') {
-							King.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
+						if (selectedPiece == 'P') {
+							Pawn.generateMoves(legalMoves, copy, 'P', 0, 7, 2, -8, 'Q', 'N');
+						} else if (selectedPiece == 'p') {
+							Pawn.generateMoves(legalMoves, copy, 'p', 1, 2, 7, 8, 'q', 'n');
+						} else if (selectedPiece == 'K') {
+							King.generateMoves(legalMoves, copy, 'K', 0, 58, 62,
+								King.WHITE_QUEEN_SIDE_OCC, King.WHITE_KING_SIDE_OCC);
+						} else if (selectedPiece == 'k') {
+							King.generateMoves(legalMoves, copy, 'k', 1, 2, 6,
+								King.BLACK_QUEEN_SIDE_OCC, King.BLACK_KING_SIDE_OCC);
 						} else if (selectedPiece == 'Q' || selectedPiece == 'q') {
 							Queen.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
 						} else if (selectedPiece == 'B' || selectedPiece == 'b') {
@@ -132,9 +149,9 @@ public class GraphicChessBoard extends JPanel {
 							Knight.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
 						}
 
-						for (Move m : legalMoves) {
-							m.print();
-						}
+						// for (Move m : legalMoves) {
+						// 	m.print();
+						// }
 					}
 
 				}
@@ -192,8 +209,8 @@ public class GraphicChessBoard extends JPanel {
 		for (char piece : ChessBoard.NAMES) {
 			bitboard = board.getBitboard(piece);
 			while (bitboard != 0) {
-				square = BitTools.getFirstSetBitPos(bitboard);
-				bitboard = BitTools.setBitOff(bitboard, square);
+				square = Long.numberOfTrailingZeros(bitboard);
+				bitboard &= ~(1l << square);
 				x = square % 8;
 				y = square / 8;
 				g2.drawImage(NAME_TO_IMAGE[piece], x * cellWidth, y * cellHeight, cellWidth, cellHeight,
