@@ -27,17 +27,70 @@ import pieces.Pawn;
 import pieces.Queen;
 import pieces.Rook;
 
-public class GraphicChessBoard extends JPanel {
+public class ChessBoardRenderer extends JPanel {
 
-	public GraphicChessBoard(SimpleChessBoard cb) {
-		super();
+	private static Image WK;
+	private static Image WQ;
+	private static Image WR;
+	private static Image WB;
+	private static Image WN;
+	private static Image WP;
+	private static Image BK;
+	private static Image BQ;
+	private static Image BR;
+	private static Image BB;
+	private static Image BN;
+	private static Image BP;
+	static {
+		try {
+			WK = loadImage("white-king");
+			WQ = loadImage("white-queen");
+			WR = loadImage("white-rook");
+			WB = loadImage("white-bishop");
+			WN = loadImage("white-knight");
+			WP = loadImage("white-pawn");
+			BK = loadImage("black-king");
+			BQ = loadImage("black-queen");
+			BR = loadImage("black-rook");
+			BB = loadImage("black-bishop");
+			BN = loadImage("black-knight");
+			BP = loadImage("black-pawn");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static final Image NAME_TO_IMAGE[] = new Image[] { null, null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+			null, null, null, WB, null, null, null, null, null, null, null, null, WK, null, null, WN, null, WP, WQ, WR,
+			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, BB, null, null,
+			null, null, null, null, null, null, BK, null, null, BN, null, BP, BQ, BR };
+	
+	static int moveCounter = 0;
+	static Random rand = new Random();
+		
+	private SimpleChessBoard board;
+	private char selectedPiece = '-';
+	private int selectedSquare = -1;
+	private List<Move> legalMoves = new ArrayList<>();
+	private Move cpuMove = null;
+	private ChessEngine engine;
+
+	private static Image loadImage(String pieceName) throws IOException {
+		InputStream stream = ChessBoardRenderer.class.getClassLoader().getResourceAsStream("images/" + pieceName + ".png");
+		Image img = ImageIO.read(stream);
+		stream.close();
+		return img;
+	}
+
+	public ChessBoardRenderer(SimpleChessBoard cb) {
 		board = cb;
 		engine = new ChessEngine();
 		initListeners();
 	}
 
-	static int moveCounter = 0;
-	static Random rand = new Random();
 	private void initListeners() {
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -49,37 +102,43 @@ public class GraphicChessBoard extends JPanel {
 
 				if (selectedPiece != '-') {
 
-					Move m = legalMoves.stream().filter(move -> move.targetSquare == clickedSquare).findFirst()
-							.orElse(null);
+					Move m = legalMoves.stream()
+								.filter(move -> move.targetSquare == clickedSquare).findFirst()
+								.orElse(null);
 
 					if (m != null) {
 
-						// m.print();
-
 						board.doMove(m);
-						// board.print();
 
 						Thread engineThread = new Thread(new Runnable() {
+
 							@Override
 							public void run() {
+
 								try {
 									Thread.sleep(100);
 								} catch (InterruptedException e) {
 									e.printStackTrace();
 								}
 
+								/*--------------------------------------*
+								 | محسابه رندوم depth موتور             |
+								 | شانس بیشتری برای depth < 9 وجود دارد |
+								 *--------------------------------------*/
 								int depth;
 								if (rand.nextInt(0, 10) < 8) {
 									depth = rand.nextInt(6, 9);
 								} else {
 									depth = 9;
 								}
-								System.out.println("depth=" + depth);
-								cpuMove = engine.calcBestMove(board, depth);
+								System.out.println("Move Number ." + moveCounter + " - Depth: " + depth);
+								System.out.println("Engine is is searching ...");
+								cpuMove = engine.calculateBestMove(board, depth);
+								System.out.println("Engine move: " + cpuMove);
+								engine.printSearchResult();
+								System.out.println();
 
 								board.doMove(cpuMove);
-								// board.print();
-
 								repaint();
 							}
 						});
@@ -118,6 +177,9 @@ public class GraphicChessBoard extends JPanel {
 						selectedPiece = clickedPiece;
 						selectedSquare = clickedSquare;
 
+						/*-------------------*
+						 | ساخت کپی از  بورد |
+						 *-------------------*/
 						ChessBoard copy = new ChessBoard();
 						for (char pieceName : ChessBoard.NAMES) {
 							copy.setBitboard(pieceName, board.getBitboard(pieceName));
@@ -148,10 +210,6 @@ public class GraphicChessBoard extends JPanel {
 						} else if (selectedPiece == 'N' || selectedPiece == 'n') {
 							Knight.generateMoves(legalMoves, copy, selectedPiece, copy.getSide());
 						}
-
-						// for (Move m : legalMoves) {
-						// 	m.print();
-						// }
 					}
 
 				}
@@ -255,58 +313,4 @@ public class GraphicChessBoard extends JPanel {
 			g2.fillRect(x * cellWidth(), y * cellHeight(), cellWidth(), cellHeight());
 		}
 	}
-
-	private static Image loadImage(String pieceName) throws IOException {
-		InputStream stream = GraphicChessBoard.class.getResourceAsStream("/images/" + pieceName + ".png");
-		Image img = ImageIO.read(stream);
-		stream.close();
-		return img;
-	}
-
-	private SimpleChessBoard board;
-	private char selectedPiece = '-';
-	private int selectedSquare = -1;
-	private List<Move> legalMoves = new ArrayList<>();
-	private Move cpuMove = null;
-	private ChessEngine engine;
-
-	private static Image WK;
-	private static Image WQ;
-	private static Image WR;
-	private static Image WB;
-	private static Image WN;
-	private static Image WP;
-	private static Image BK;
-	private static Image BQ;
-	private static Image BR;
-	private static Image BB;
-	private static Image BN;
-	private static Image BP;
-
-	static {
-		try {
-			WK = loadImage("white-king");
-			WQ = loadImage("white-queen");
-			WR = loadImage("white-rook");
-			WB = loadImage("white-bishop");
-			WN = loadImage("white-knight");
-			WP = loadImage("white-pawn");
-			BK = loadImage("black-king");
-			BQ = loadImage("black-queen");
-			BR = loadImage("black-rook");
-			BB = loadImage("black-bishop");
-			BN = loadImage("black-knight");
-			BP = loadImage("black-pawn");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private static final Image NAME_TO_IMAGE[] = new Image[] { null, null, null, null, null, null, null, null, null,
-			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-			null, null, null, WB, null, null, null, null, null, null, null, null, WK, null, null, WN, null, WP, WQ, WR,
-			null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, BB, null, null,
-			null, null, null, null, null, null, BK, null, null, BN, null, BP, BQ, BR };
 }

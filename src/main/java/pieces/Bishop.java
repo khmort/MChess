@@ -1,15 +1,13 @@
 package pieces;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import org.nd4j.shade.guava.io.Files;
 import chessboard.ChessBoard;
 import chessboard.Move;
-import chessboard.function.MagicNumbers;
+import chessboard.function.MagicNumberFactory;
 
 public class Bishop {
 
@@ -17,24 +15,22 @@ public class Bishop {
 		// load map and magic numbers
 		magicNumbers = new long[64];
 		maps = new Long[64][];
-		String folder = "/home/khmort/Programming/JAVA projects/MChess/magic numbers/bishop";
-		File parent = new File(folder);
-		for (File f : parent.listFiles()) {
-			String name = f.getName();
-			String pure = name.substring(0, name.indexOf('.'));
-			int square = Integer.parseInt(pure);
-			if (name.endsWith(".txt")) {
-				magicNumbers[square] = Long.parseLong(Files.readLines(f, StandardCharsets.UTF_8).get(0));
-			} else if (name.endsWith(".map")) {
-				ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f));
-				maps[square] = (Long[]) ois.readObject();
-				ois.close();
-			}
+
+		for (int i=0; i<64; i++) {
+			InputStream numStream = Bishop.class.getClassLoader().getResourceAsStream("magic numbers/bishop/" + i + ".txt");
+			InputStream mapStream = Bishop.class.getClassLoader().getResourceAsStream("magic numbers/bishop/" + i + ".map");
+			magicNumbers[i] = Long.parseLong(new String(numStream.readAllBytes(), StandardCharsets.UTF_8));
+			numStream.close();
+			ObjectInputStream ois = new ObjectInputStream(mapStream);
+			maps[i] = (Long[]) ois.readObject();
+			ois.close();
+			mapStream.close();
 		}
+		
 		attacksBySquare = new Long[64];
 		attacksCountBySquare = new int[64];
 		for (int i = 0; i < 64; i++) {
-			attacksBySquare[i] = MagicNumbers.removeBorder(i, MagicNumbers.getBishopRawMoves(i, 0L));
+			attacksBySquare[i] = MagicNumberFactory.removeBorder(i, MagicNumberFactory.getBishopRawMoves(i, 0L));
 			attacksCountBySquare[i] = Long.bitCount(attacksBySquare[i]);
 		}
 	}
