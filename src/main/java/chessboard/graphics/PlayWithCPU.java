@@ -16,9 +16,8 @@ import pieces.Knight;
 import pieces.Pawn;
 import pieces.Rook;
 
-public class Test {
-
-	public static void main(String[] args) throws NumberFormatException, ClassNotFoundException, IOException {
+public class PlayWithCPU {
+    public static void main(String[] args) throws NumberFormatException, ClassNotFoundException, IOException {
 		
 		Pawn.init();
 		Bishop.init();
@@ -27,10 +26,8 @@ public class Test {
 		King.init();
 		
 		JFrame frame = new JFrame();
-		
 		JPanel chessPanel = new JPanel(new BorderLayout());
 		
-		// Buttons!
 		JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		JButton cpu = new JButton("CPU is white!");
 		buttonsPanel.add(cpu);
@@ -38,8 +35,7 @@ public class Test {
 		chessPanel.add(buttonsPanel, "South");
 		
 		SimpleChessBoard chessboard = new SimpleChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-		
-		GraphicChessBoard gchessboard = new GraphicChessBoard(chessboard);
+		ChessBoardRenderer gchessboard = new ChessBoardRenderer(chessboard);
 		
 		chessPanel.add(gchessboard, "Center");
 		
@@ -59,5 +55,4 @@ public class Test {
 		frame.setDefaultCloseOperation(3);
 		frame.setVisible(true);
 	}
-
 }

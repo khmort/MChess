@@ -1,24 +1,27 @@
 package chessboard.function;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
-
-import org.nd4j.shade.guava.io.Files;
 
 // import utils.BitTools;
 
-public class MagicNumbers {
+public class MagicNumberFactory {
+
+    public static final long border = 0xff818181818181ffl,
+                             top = 0x00000000000000ffL,
+                             right = 0x8080808080808080L,
+                             down = 0xff00000000000000L,
+                             left = 0x0101010101010101L,
+                             top_right = 0x80808080808080ffL,
+                             top_left = 0x01010101010101ffL,
+                             right_down = 0xff80808080808080L,
+                             down_left = 0xff01010101010101L;
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-
-        loadTest();
 
         // بیت های 1 حرکات ممکن شامل خانه هایی است که
         // مهره می تواند به آنجا برود اگر صفحه شطرنج
@@ -28,10 +31,6 @@ public class MagicNumbers {
         for (int i=0; i<64; i++) {
             possiblelMoves[i] = removeBorder(i, getBishopRawMoves(i, 0L));
         }
-
-        // برای تست
-        // BitTools.print(possiblelMoves[0]);
-        // BitTools.print(possiblelMoves[28]);
 
         Random rand = new Random();
         createFolder("/home/khmort/Programming/JAVA projects/MChess/magic numbers/bishop");
@@ -107,26 +106,6 @@ public class MagicNumbers {
         }
     }
 
-    public static void loadTest() throws IOException, ClassNotFoundException {
-
-        Long moves = removeBorder(5, getBishopRawMoves(5, 0L));
-        int[] brights = getBrightBits(moves);
-        Long block = 8657588224L;
-        // BitTools.print(block);
-
-        // load
-        String folder = "/home/khmort/Programming/JAVA projects/MChess/magic numbers/bishop";
-        Long magic = Long.parseLong(Files.readLines(new File(folder + "/5.txt"), StandardCharsets.UTF_8).get(0));
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(folder + "/5.map")));
-        Long[] map = (Long[]) ois.readObject();
-        ois.close();
-
-        System.out.println("map[31] " + map[30]);
-        // BitTools.print(map[(int) ((magic * block) >>> (64 - brights.length))]);
-
-        System.exit(0);
-    }
-
     public static int getOccupiedSize(Object[] arr) {
         return -1;
     }
@@ -152,14 +131,6 @@ public class MagicNumbers {
         return brights;
     }
     
-    /**
-     * خانه هایی که مهره با وجود بلوکه کننده ها می تواند بگذارد
-     * خانه های حمله هم محاسبه می شوند
-     * این تابع فقط برای رخ درست کار می کند!
-     * 
-     * @param square خانه ای که مهره در آن قرار دارد
-     * @param blocks بلوکه کننده
-     */
     public static Long removeBorder(int square, Long board) {
 
         // حذف حاشیه ها برای سرعت بیشتر محاسبه عدد جادویی
@@ -293,9 +264,11 @@ public class MagicNumbers {
 
     }
 
-    // =============================== //
-    //         SAVING RESULTS          //
-    // =============================== //
+    /*__^__                             __^__
+     ( ___ )---------------------------( ___ )
+      | / | توابع کمکی برای ذخیره نتایج | \ |
+      |___|                             |___|
+     (_____)---------------------------(_____)*/
 
     public static void saveMap(String parentFolder, int square, Long[] map) throws IOException {
         File saveFile = new File(parentFolder + "/" + square + ".map");
@@ -321,18 +294,8 @@ public class MagicNumbers {
         fw.close();
     }
 
-    public static boolean between(int target, int org, int dest) {
+    private static boolean between(int target, int org, int dest) {
         return target > org && target < dest;
     }
-
-    public static Long border = 0xff818181818181ffl;
-    public static long top = 0x00000000000000ffL,
-                       right = 0x8080808080808080L,
-                       down = 0xff00000000000000L,
-                       left = 0x0101010101010101L,
-                       top_right = 0x80808080808080ffL,
-                       top_left = 0x01010101010101ffL,
-                       right_down = 0xff80808080808080L,
-                       down_left = 0xff01010101010101L;
 
 }

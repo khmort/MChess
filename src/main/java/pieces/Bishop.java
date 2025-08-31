@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
 import org.nd4j.shade.guava.io.Files;
+
 import chessboard.ChessBoard;
 import chessboard.Move;
-import chessboard.function.MagicNumbers;
+import chessboard.function.MagicNumberFactory;
 
 public class Bishop {
 
@@ -17,8 +19,9 @@ public class Bishop {
 		// load map and magic numbers
 		magicNumbers = new long[64];
 		maps = new Long[64][];
-		String folder = "/home/khmort/Programming/JAVA projects/MChess/magic numbers/bishop";
-		File parent = new File(folder);
+		// edit `folder` base on your local path
+		String folder = "/home/khmort/Programming/JAVA projects/MChess/src/main/resources/magic numbers";
+		File parent = new File(folder + "/bishop");
 		for (File f : parent.listFiles()) {
 			String name = f.getName();
 			String pure = name.substring(0, name.indexOf('.'));
@@ -34,7 +37,7 @@ public class Bishop {
 		attacksBySquare = new Long[64];
 		attacksCountBySquare = new int[64];
 		for (int i = 0; i < 64; i++) {
-			attacksBySquare[i] = MagicNumbers.removeBorder(i, MagicNumbers.getBishopRawMoves(i, 0L));
+			attacksBySquare[i] = MagicNumberFactory.removeBorder(i, MagicNumberFactory.getBishopRawMoves(i, 0L));
 			attacksCountBySquare[i] = Long.bitCount(attacksBySquare[i]);
 		}
 	}

@@ -12,6 +12,32 @@ import pieces.Rook;
 
 public class ChessBoard {
 
+	public static final char[] NAMES = new char[] { 'K', 'Q', 'R', 'B', 'N', 'P', 'k', 'q', 'r', 'b', 'n', 'p' };
+	public static final char[] UNICODES = new char[] { '♔', '♕', '♖', '♗', '♘', '♙', '♚', '♛', '♜', '♝', '♞', '♟' };
+	public static final char[][] COLOR_TO_NAMES = new char[][] {
+		{'K', 'Q', 'R', 'B', 'N', 'P' },
+		{ 'k', 'q', 'r', 'b', 'n', 'p' }};
+	public static final char[][] COLOR_TO_RANDOM_NAMES = new char[][] {
+		{'B', 'Q', 'N', 'R', 'P', 'K'},
+		{'b', 'q', 'n', 'r', 'p', 'k'}
+	};
+
+	public static final int[] NAME_TO_COLOR = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1 };
+	
+	public static final int[] NAME_TO_OPPOSITE_COLOR = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	public int side;
+	public long[] nameToOrder;
+	public long[] occupancies;
+	public int castleRight;
+	public int[] squareToName;
+
 	protected ChessBoard(int side, long[] nameToOrder, int[] squareToName, long[] occupancies, byte castleRight) {
 		this.side = side;
 		this.nameToOrder = nameToOrder;
@@ -33,25 +59,12 @@ public class ChessBoard {
 		castleRight = 0;
 		reset();
 	}
-
-
-	public void setSide(int side) {
-		this.side = side;
-	}
-
-	public int getSide() {
-		return side;
-	}
-
-	public int getOpposingSite() {
-		return side ^ 1;
-	}
-
+	
 	
 	public List<Move> generateMoves() {
-
+		
 		List<Move> container = new ArrayList<>();
-
+		
 		if (side == 0) {
 			Pawn.generateMoves(container, this, 'P', 0, 7, 2, -8, 'Q', 'N');
 			Bishop.generateMoves(container, this, 'B', 0);
@@ -59,9 +72,9 @@ public class ChessBoard {
 			Queen.generateMoves(container, this, 'Q', 0);
 			Rook.generateMoves(container, this, 'R', 0);
 			King.generateMoves(container, this, 'K', 0, 58, 62, King.WHITE_QUEEN_SIDE_OCC,
-				King.WHITE_KING_SIDE_OCC);
-		} else {
-			Pawn.generateMoves(container, this, 'p', 1, 2, 7, 8, 'q', 'n');
+			King.WHITE_KING_SIDE_OCC);
+			} else {
+				Pawn.generateMoves(container, this, 'p', 1, 2, 7, 8, 'q', 'n');
 			Bishop.generateMoves(container, this, 'b', 1);
 			Knight.generateMoves(container, this, 'n', 1);
 			Queen.generateMoves(container, this, 'q', 1);
@@ -72,21 +85,31 @@ public class ChessBoard {
 		
 		return container;
 	}
+	
+	public int getSide() {
+		return side;
+	}
 
-	public void setBitboard(int pieceName, long bitboard) {
-		nameToOrder[pieceName] = bitboard;
+	public int getOpposingSite() {
+		return side ^ 1;
+	}
+	
+	public void setSide(int side) {
+		this.side = side;
 	}
 
 	public long getBitboard(int pieceName) {
 		return nameToOrder[pieceName];
 	}
 
-	/**
-	 * It calculates which squares are occupied by the given side color.
-	 * 
-	 * @param color white (0) or black (1)?
-	 * @return a bitboard contains all the squares occupied by the given color.
-	 */
+	public void setBitboard(int pieceName, long bitboard) {
+		nameToOrder[pieceName] = bitboard;
+	}
+	
+	public long getOccupancies(int color) {
+		return occupancies[color];
+	}
+
 	protected long calcOccupancies(int color) {
 		long res = 0L;
 		for (char c : COLOR_TO_NAMES[color]) {
@@ -94,22 +117,7 @@ public class ChessBoard {
 		}
 		return res;
 	}
-
-	/**
-	 * The occupancies are not recalculated and the values ​​in the `occupancies`
-	 * array are used.
-	 * 
-	 * @param color white (0) or black (1)?
-	 */
-	public long getOccupancies(int color) {
-		return occupancies[color];
-	}
-
-	/**
-	 * First, the occupied squares are calculated by the `calcOccupancies()`
-	 * function, then they are stored in the `occupancies` array with the color
-	 * index.
-	 */
+	
 	public void updateOccupancies() {
 		occupancies[0] = calcOccupancies(0);
 		occupancies[1] = calcOccupancies(1);
@@ -144,13 +152,18 @@ public class ChessBoard {
 	public void parseFEN(String fen) {
 		reset();
 
-		// field-0: piece placement data
-		// field-1: active color
-		// field-2: castling availability
-
+		/*       _\|/_
+				(o o)
+		+----oOO-{_}-OOo----------------+
+		|Field-0 -> Piece placement data|
+		|Field-1 -> Active color        |
+		|Field-2 -> Castling right      |
+		+------------------------------*/
 		String[] fields = fen.split(" ");
 
-		// ========== Field 0 ==========
+		/*---------*
+		| Field-0 |
+		*---------*/		
 		String[] rows = fields[0].split("/");
 		int pointer;
 		for (int row = 0; row < 8; row++) {
@@ -165,29 +178,30 @@ public class ChessBoard {
 			}
 		}
 
-		// ========== Field 1 ==========
-		if (fields[1].equals("w")) {
-			side = 0;
-		} else {
-			side = 1;
-		}
+		/*---------*
+		 | Field-1 |
+		 *---------*/
+		if (fields[1].equals("w")) side = 0;
+		else side = 1;
 
-		// ========== Field 2 ==========
+		/*---------*
+		 | Field-2 |
+		 *---------*/
 		castleRight = 0;
 		String castleStatus = fields[2];
-
 		HashMap<Character, Integer> charToStatus = new HashMap<>(5);
 		charToStatus.put('K', 0b0010);
 		charToStatus.put('Q', 0b0001);
 		charToStatus.put('k', 0b1000);
 		charToStatus.put('q', 0b0100);
 		charToStatus.put('-', 0);
-
 		for (char c : castleStatus.toCharArray()) {
 			castleRight = castleRight | charToStatus.get(c);
 		}
 
-		// آپدیت آرایه squareToName
+		/*----------------------------*
+		 | آپدیت آرایه square-to-name |
+		 *----------------------------*/
 		for (char pieceName : NAMES) {
 			long board = getBitboard(pieceName);
 			while (board != 0) {
@@ -197,12 +211,14 @@ public class ChessBoard {
 			}
 		}
 
-		// update occupancies array
+		/*-------------------------*
+		 | آپدیت آرایه Occupencies |
+		 *-------------------------*/
 		updateOccupancies();
 	}
 
 	/**
-	 * make all pieces's bitboard zero!
+	 * make all bitboard zero!
 	 */
 	public void reset() {
 		nameToOrder['K'] = 0L;
@@ -275,39 +291,5 @@ public class ChessBoard {
 		}
 		return UNICODES[j];
 	}
-
-
-	//////////////////////////////////////////
-	///              Fields                ///
-	//////////////////////////////////////////
-
-	protected int side;
-	protected long[] nameToOrder;
-	protected long[] occupancies;
-	public int castleRight;
-	public int[] squareToName;
-
-
-	public static final char[] NAMES = new char[] { 'K', 'Q', 'R', 'B', 'N', 'P', 'k', 'q', 'r', 'b', 'n', 'p' };
-	public static final char[] UNICODES = new char[] { '♔', '♕', '♖', '♗', '♘', '♙', '♚', '♛', '♜', '♝', '♞', '♟' };
-	public static final char[][] COLOR_TO_NAMES = new char[][] { { 'K', 'Q', 'R', 'B', 'N', 'P' },
-			{ 'k', 'q', 'r', 'b', 'n', 'p' } };
-	
-	public static final char[][] COLOR_TO_RANDOM_NAMES = new char[][] {
-		{'B', 'Q', 'N', 'R', 'P', 'K'},
-		{'b', 'q', 'n', 'r', 'p', 'k'}
-	};
-
-	// this array can convert char-name ('P' 'Q' ...) to the side by doing
-	// NAME_TO_COLOR['P'].
-	public static final int[] NAME_TO_COLOR = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1 };
-	// this array can convert char-name ('P' 'Q' ...) to the opposite color.
-	public static final int[] NAME_TO_OPPOSITE_COLOR = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 }
