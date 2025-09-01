@@ -18,7 +18,7 @@ public class Rook {
 		magicNumbers = new long[64];
 		maps = new Long[64][];
 		// edit `folder` base on your local path
-		String folder = "/home/khmort/Programming/JAVA projects/MChess/src/main/resources/magic numbers";
+		String folder = "/path/to/magic numbers";
 		File parent = new File(folder + "/rook");
 		for (File f : parent.listFiles()) {
 			String name = f.getName();
