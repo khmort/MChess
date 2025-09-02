@@ -12,7 +12,7 @@ import pieces.Rook;
 
 public class ChessBoard {
 
-	public static final char[] NAMES = new char[] { 'K', 'Q', 'R', 'B', 'N', 'P', 'k', 'q', 'r', 'b', 'n', 'p' };
+	public static final int[] NAMES = new int[] { 'K', 'Q', 'R', 'B', 'N', 'P', 'k', 'q', 'r', 'b', 'n', 'p' };
 	public static final char[] UNICODES = new char[] { '♔', '♕', '♖', '♗', '♘', '♙', '♚', '♛', '♜', '♝', '♞', '♟' };
 	public static final char[][] COLOR_TO_NAMES = new char[][] {
 		{'K', 'Q', 'R', 'B', 'N', 'P' },
@@ -124,6 +124,70 @@ public class ChessBoard {
 		occupancies[2] = occupancies[0] | occupancies[1];
 	}
 
+	public String boardToFEN() {
+		StringBuilder fen = new StringBuilder();
+
+		// از ردیف 8 (rank=7) به پایین تا ردیف 1 (rank=0)
+		for (int rank = 7; rank >= 0; rank--) {
+			int emptyCount = 0;
+			for (int file = 0; file < 8; file++) {
+				int squareIndex = rank * 8 + file;  // 0=a1 ... 63=h8
+				int piece = this.pieceAt(squareIndex);
+
+				if (piece == 0) { // خانه خالی
+					emptyCount++;
+				} else {
+					if (emptyCount > 0) {
+						fen.append(emptyCount);
+						emptyCount = 0;
+					}
+					fen.append((char) piece); // چون squareToName مهره‌ها رو به صورت کد کاراکتر ذخیره کرده
+				}
+			}
+			if (emptyCount > 0) fen.append(emptyCount);
+			if (rank > 0) fen.append('/');
+		}
+
+		return fen.toString();
+	}
+
+	public String boardToFENFromBitboards() {
+		StringBuilder fen = new StringBuilder();
+
+		for (int rank = 7; rank >= 0; rank--) {
+			int emptyCount = 0;
+			for (int file = 0; file < 8; file++) {
+				int squareIndex = rank * 8 + file;
+				char piece = pieceAtBitboard(squareIndex);
+
+				if (piece == 0) { // خالی
+					emptyCount++;
+				} else {
+					if (emptyCount > 0) {
+						fen.append(emptyCount);
+						emptyCount = 0;
+					}
+					fen.append(piece);
+				}
+			}
+			if (emptyCount > 0) fen.append(emptyCount);
+			if (rank > 0) fen.append('/');
+		}
+
+		return fen.toString();
+	}
+
+	// متد کمکی برای پیدا کردن قطعه در یک خانه با استفاده از bitboards
+	private char pieceAtBitboard(int square) {
+		long mask = 1L << square;
+		for (int p : NAMES) {
+			if ((nameToOrder[p] & mask) != 0) {
+				return (char) p;
+			}
+		}
+		return 0; // خالی
+	}
+
 	/**
 	 * نام قطعه در خانه داده شده را بر می گرداند. اگر مهره ای وجود
 	 * نداشته باشد صفر را بر می گرداند
@@ -162,8 +226,8 @@ public class ChessBoard {
 		String[] fields = fen.split(" ");
 
 		/*---------*
-		| Field-0 |
-		*---------*/		
+		 | Field-0 |
+		 *---------*/		
 		String[] rows = fields[0].split("/");
 		int pointer;
 		for (int row = 0; row < 8; row++) {
@@ -202,7 +266,7 @@ public class ChessBoard {
 		/*----------------------------*
 		 | آپدیت آرایه square-to-name |
 		 *----------------------------*/
-		for (char pieceName : NAMES) {
+		for (int pieceName : NAMES) {
 			long board = getBitboard(pieceName);
 			while (board != 0) {
 				int pos = Long.numberOfTrailingZeros(board);
@@ -257,10 +321,10 @@ public class ChessBoard {
 				char piece;
 				while (j < row * 8) {
 					piece = 0;
-					for (char name : NAMES) {
+					for (int name : NAMES) {
 						long bb = getBitboard(name);
 						if (((bb >>> j) & 1) == 1) {
-							piece = name;
+							piece = (char) name;
 						}
 					}
 					if (piece == 0) {

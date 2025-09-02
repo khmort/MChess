@@ -12,38 +12,24 @@ import chessboard.function.MagicNumberFactory;
 public class Rook {
 
 	public static void init() throws NumberFormatException, IOException, ClassNotFoundException {
-		// load map and magic numbers
+		
 		magicNumbers = new long[64];
 		maps = new Long[64][];
-
-		for (int i=0; i<64; i++) {
-			InputStream numStream = Rook.class.getClassLoader().getResourceAsStream("magic numbers/rook/" + i + ".txt");
-			InputStream mapStream = Rook.class.getClassLoader().getResourceAsStream("magic numbers/rook/" + i + ".map");
-			magicNumbers[i] = Long.parseLong(new String(numStream.readAllBytes(), StandardCharsets.UTF_8));
-			numStream.close();
-			ObjectInputStream ois = new ObjectInputStream(mapStream);
-			maps[i] = (Long[]) ois.readObject();
-			ois.close();
-			mapStream.close();
-		}
-
 		attacksBySquare = new Long[64];
 		attacksCountBySquare = new int[64];
-		for (int i = 0; i < 64; i++) {
-			attacksBySquare[i] = MagicNumberFactory.removeBorder(i, MagicNumberFactory.getRawMoves(i, 0L));
-			attacksCountBySquare[i] = Long.bitCount(attacksBySquare[i]);
-		}
 
 		for (int i=0; i<64; i++) {
 			InputStream numStream = Rook.class.getClassLoader().getResourceAsStream("magic numbers/rook/" + i + ".txt");
 			InputStream mapStream = Rook.class.getClassLoader().getResourceAsStream("magic numbers/rook/" + i + ".map");
 			magicNumbers[i] = Long.parseLong(new String(numStream.readAllBytes(), StandardCharsets.UTF_8));
 			numStream.close();
-
 			ObjectInputStream ois = new ObjectInputStream(mapStream);
 			maps[i] = (Long[]) ois.readObject();
 			ois.close();
 			mapStream.close();
+
+			attacksBySquare[i] = MagicNumberFactory.removeBorder(i, MagicNumberFactory.getRawMoves(i, 0L));
+			attacksCountBySquare[i] = Long.bitCount(attacksBySquare[i]);
 		}
 	}
 

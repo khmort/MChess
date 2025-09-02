@@ -85,6 +85,19 @@ public class Move {
 		return res;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		Move other = (Move) obj;
+		return pieceName == other.pieceName &&
+			   sourceSquare == other.sourceSquare &&
+			   targetName == other.targetName &&
+			   targetSquare == other.targetSquare &&
+			   promotedName == other.promotedName;
+	}
+
 	public int pieceName;
 	public int targetName;
 	public int promotedName;

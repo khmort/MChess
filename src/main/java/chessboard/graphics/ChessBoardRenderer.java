@@ -87,7 +87,7 @@ public class ChessBoardRenderer extends JPanel {
 
 	public ChessBoardRenderer(SimpleChessBoard cb) {
 		board = cb;
-		engine = new ChessEngine();
+		engine = new ChessEngine(1_500_000);
 		initListeners();
 	}
 
@@ -110,40 +110,36 @@ public class ChessBoardRenderer extends JPanel {
 
 						board.doMove(m);
 
-						Thread engineThread = new Thread(new Runnable() {
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException exc) {
+							exc.printStackTrace();
+						}
 
-							@Override
-							public void run() {
+						/*--------------------------------------*
+						| محاسبه رندوم depth موتور             |
+						| شانس بیشتری برای depth < 9 وجود دارد |
+						*--------------------------------------*/
+						int depth;
+						if (moveCounter <= 16) {
+							depth = 7;
+						}
+						else if (moveCounter <= 26) {
+							depth = 8;
+						}
+						else {
+							depth = 10;
+						}
+						System.out.println("Move Number ." + moveCounter + " - Depth: " + depth);
+						System.out.println("Engine is searching ...");
+						cpuMove = engine.calculateBestMove(board, depth);
+						System.out.println("Engine move: " + cpuMove);
+						engine.printSearchResult();
+						System.out.println();
 
-								try {
-									Thread.sleep(100);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
+						board.doMove(cpuMove);
+						repaint();
 
-								/*--------------------------------------*
-								 | محسابه رندوم depth موتور             |
-								 | شانس بیشتری برای depth < 9 وجود دارد |
-								 *--------------------------------------*/
-								int depth;
-								if (rand.nextInt(0, 10) < 8) {
-									depth = rand.nextInt(6, 9);
-								} else {
-									depth = 9;
-								}
-								System.out.println("Move Number ." + moveCounter + " - Depth: " + depth);
-								System.out.println("Engine is is searching ...");
-								cpuMove = engine.calculateBestMove(board, depth);
-								System.out.println("Engine move: " + cpuMove);
-								engine.printSearchResult();
-								System.out.println();
-
-								board.doMove(cpuMove);
-								repaint();
-							}
-						});
-
-						engineThread.start();
 						moveCounter++;
 
 					}
@@ -181,7 +177,7 @@ public class ChessBoardRenderer extends JPanel {
 						 | ساخت کپی از  بورد |
 						 *-------------------*/
 						ChessBoard copy = new ChessBoard();
-						for (char pieceName : ChessBoard.NAMES) {
+						for (int pieceName : ChessBoard.NAMES) {
 							copy.setBitboard(pieceName, board.getBitboard(pieceName));
 						}
 						copy.setBitboard(selectedPiece, 1l << selectedSquare);
@@ -264,7 +260,7 @@ public class ChessBoardRenderer extends JPanel {
 		int x, y;
 		int cellWidth = cellWidth(), cellHeight = cellHeight();
 
-		for (char piece : ChessBoard.NAMES) {
+		for (int piece : ChessBoard.NAMES) {
 			bitboard = board.getBitboard(piece);
 			while (bitboard != 0) {
 				square = Long.numberOfTrailingZeros(bitboard);

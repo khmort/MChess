@@ -12,9 +12,11 @@ import chessboard.function.MagicNumberFactory;
 public class Bishop {
 
 	public static void init() throws NumberFormatException, IOException, ClassNotFoundException {
-		// load map and magic numbers
+		
 		magicNumbers = new long[64];
 		maps = new Long[64][];
+		attacksBySquare = new Long[64];
+		attacksCountBySquare = new int[64];
 
 		for (int i=0; i<64; i++) {
 			InputStream numStream = Bishop.class.getClassLoader().getResourceAsStream("magic numbers/bishop/" + i + ".txt");
@@ -25,11 +27,7 @@ public class Bishop {
 			maps[i] = (Long[]) ois.readObject();
 			ois.close();
 			mapStream.close();
-		}
-		
-		attacksBySquare = new Long[64];
-		attacksCountBySquare = new int[64];
-		for (int i = 0; i < 64; i++) {
+
 			attacksBySquare[i] = MagicNumberFactory.removeBorder(i, MagicNumberFactory.getBishopRawMoves(i, 0L));
 			attacksCountBySquare[i] = Long.bitCount(attacksBySquare[i]);
 		}

@@ -306,7 +306,7 @@ public class SimpleChessBoard extends ChessBoard {
 	public boolean hasConflict() {
 		for (int i = 0; i < 64; i++) {
 			int cc = 0;
-			for (char name : NAMES) {
+			for (int name : NAMES) {
 				long bb = getBitboard(name);
 				if (((bb >>> i) & 1) == 1) {
 					cc++;

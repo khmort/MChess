@@ -3,10 +3,12 @@ package engine;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
 import chessboard.ChessBoard;
 import chessboard.Move;
 import chessboard.SimpleChessBoard;
+import engine.tt.Flag;
+import engine.tt.SearchResult;
+import engine.tt.TT;
 
 public class ChessEngine {
 
@@ -33,12 +35,16 @@ public class ChessEngine {
 	
 	public double depthToScore[];
 	public Move depthToMove[];
+	public TT tt;
 	private int nodeCount;
 	private long calculationTime;
 
-	public ChessEngine() {}
+	public ChessEngine(int ttSize) {
+		tt = new TT(ttSize);
+	}
 
 	public Move calculateBestMove(SimpleChessBoard board, int depth) {
+		tt.remove(board);
 		depthToMove = new Move[depth];
 		depthToScore = new double[depth];
 		nodeCount = 0;
@@ -63,41 +69,58 @@ public class ChessEngine {
 	public double minimax(int depth, SimpleChessBoard simpleBoard, double alpha, double beta) {
 
 		nodeCount++;
+
 		if (depth == 0) return getBoardScore(simpleBoard);
 
 		List<Move> moves = simpleBoard.generateMoves();
+		Collections.sort(moves, SIMPLE_MOVE_SORTER);
 
-		// لیست حرکات برای ایجاد تنوع حرکتی
-		// بدون shuffle موتور همیشه یک حرکت را انتخاب می کند
-		Collections.shuffle(moves);
-		// برای افزایش بازدهی هرس آلفا بتا
-		moves.sort(SIMPLE_MOVE_SORTER);
+		long hash = TT.generateHash(simpleBoard);
+		
+		SearchResult nodeResult = tt.get(hash);
+		if (nodeResult != null && nodeResult.depth >= depth) {
+			if (nodeResult.flag == Flag.EXACT) {
+				return nodeResult.score;
+			}
+			if (nodeResult.score >= beta && nodeResult.flag == Flag.LOWER) {
+				return nodeResult.score;
+			}
+			if (nodeResult.score <= alpha && nodeResult.flag == Flag.UPPER) {
+				return nodeResult.score;
+			}
+		}
 
 		double score;
 
 		if (simpleBoard.getSide() == 0) {
 
 			for (Move move : moves) {
+
 				simpleBoard.doMove(move);
+
 				if (simpleBoard.isWhiteKingOnFire()) {
 					simpleBoard.undoMove(move);
 					continue;
 				}
 				score = minimax(depth - 1, simpleBoard, alpha, beta);
 				simpleBoard.undoMove(move);
+
 				if (score >= beta) {
-					return beta;
+					tt.put(new SearchResult(hash, score, Flag.LOWER, depth));
+					return score;
 				}
+
 				if (score > alpha) {
 					alpha = score;
 					depthToMove[depth - 1] = move;
-					// depthToScore[depth - 1] = score;
 				}
 			}
+			tt.put(new SearchResult(hash, alpha, Flag.EXACT, depth));
 			return alpha;
 		} else {
 
 			for (Move move : moves) {
+
 				simpleBoard.doMove(move);
 
 				if (simpleBoard.isBlackKingOnFire()) {
@@ -109,22 +132,23 @@ public class ChessEngine {
 				simpleBoard.undoMove(move);
 
 				if (score <= alpha) {
-					return alpha;
+					tt.put(new SearchResult(hash, score, Flag.UPPER, depth));
+					return score;
 				}
 
 				if (score < beta) {
 					beta = score;
 					depthToMove[depth - 1] = move;
-					// depthToScore[depth - 1] = score;
 				}
 			}
+			tt.put(new SearchResult(hash, beta, Flag.EXACT, depth));
 			return beta;
 		}
 	}
 
 	public double getBoardScore(ChessBoard cb) {
 		double score = 0.0;
-		for (char piece : ChessBoard.NAMES) {
+		for (int piece : ChessBoard.NAMES) {
 			score += Long.bitCount(cb.getBitboard(piece)) * PIECE_VALUE[piece];
 		}
 		return score;
